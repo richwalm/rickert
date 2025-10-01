@@ -1,8 +1,9 @@
 'use strict';
 
 import { Comic } from './comic.js';
+import { GUI } from './gui.js';
 
-let C;
+let C, G;
 
 function SetMessage(Message) {
 	const MsgEle = document.getElementById('msg');
@@ -18,6 +19,8 @@ function CreateComic(BasePath, Meta) {
 	C = new Comic(Meta, BasePath);
 	C.SetPage(0);
 	globalThis.Comic = C;
+	G = new GUI(C);
+	globalThis.GUI = G;
 }
 
 function LoadComic(BasePath) {

@@ -84,6 +84,8 @@ export class Comic {
 	}
 	get MoveByViewpoint() { return this._MoveByViewpoint; };
 
+	get Direction() { return this._PDX >= 0; };
+
 	set ShowVPs(Value) {
 		if (this._AddVPs == Value)
 			return;
@@ -101,6 +103,7 @@ export class Comic {
 		this._AddVPs = Value;
 	}
 	get ShowVPs() { return this._AddVPs; };
+	get HasViewpoints() { return Boolean(this._Viewpoints); }
 
 	set FillMode(Value) {
 		if (this._FillMode == Value)
