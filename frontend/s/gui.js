@@ -9,6 +9,16 @@ export class GUI {
 		addEventListener('keydown', this._HandleKey.bind(this));
 	}
 
+	static SetMessage(Message) {
+		const MsgEle = document.getElementById('msg');
+		if (!Message) {
+			MsgEle.style.display = 'none';
+			return;
+		}
+		MsgEle.firstChild.textContent = Message;
+		MsgEle.style.display = 'flex';
+	}
+
 	_MovePageKey(Dir) {
 		if (!this._C.Direction)	// Flip direction for LTR comics.
 			Dir = !Dir;

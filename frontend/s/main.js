@@ -5,16 +5,6 @@ import { GUI } from './gui.js';
 
 let C, G;
 
-function SetMessage(Message) {
-	const MsgEle = document.getElementById('msg');
-	if (!Message) {
-		MsgEle.style.display = 'none';
-		return;
-	}
-	MsgEle.textContent = Message;
-	MsgEle.style.display = 'flex';
-}
-
 function CreateComic(BasePath, Meta) {
 	C = new Comic(Meta, BasePath);
 	C.SetPage(0);
@@ -24,7 +14,7 @@ function CreateComic(BasePath, Meta) {
 }
 
 function LoadComic(BasePath) {
-	SetMessage('Loading comic...');
+	GUI.SetMessage('Loading comic...');
 
 	const ComicMeta = fetch(BasePath + 'meta.json').then(Response => {
 		if (!Response.ok)
@@ -32,10 +22,10 @@ function LoadComic(BasePath) {
 		return Response.json();
 	}).then(JSON => {
 		CreateComic(BasePath, JSON);
-		SetMessage(false);
+		GUI.SetMessage(false);
 	}).catch(Error => {
 		console.log(Error);
-		SetMessage('Failed to load comic.');
+		GUI.SetMessage('Failed to load comic.');
 	});
 }
 
@@ -47,6 +37,6 @@ addEventListener('load', (event) => {
 			BasePath += '/';
 		LoadComic(BasePath);
 	} else {
-		SetMessage('No comic specified.');
+		GUI.SetMessage('No comic specified.');
 	}
 });

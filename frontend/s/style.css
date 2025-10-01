@@ -29,6 +29,23 @@ body {
 	min-height: 100vh;
 	position: relative;
 }
+#msg > div {
+	background: #000;
+	padding: .5em;
+	border: 2px solid #aaa;
+	border-radius: 1em;
+	font: normal large sans-serif;
+}
+#msg > div p:first-child {
+	margin-top: 0;
+}
+#msg > div input {
+	font-size: large;
+	color: #fff;
+	background: #000;
+	border-radius: .5em;
+	padding: .25em;
+}
 
 /* Shade */
 #shade { position: absolute; border-collapse: collapse; pointer-events: none; transition: opacity 500ms; opacity: 0; width: calc(100% + 20px); height: calc(100% + 20px); top: -10px; left: -10px; }
