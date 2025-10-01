@@ -108,13 +108,14 @@ const Shade = new class {
 	constructor() {
 		this._S = document.getElementById('shade');
 		this._SH = document.getElementById('shadehole');
+		this._O = 10;
 	}
 
 	SetSize(Width, Height, Left, Top) {
-		this._SH.style.width = Width + 'px';
-		this._SH.style.height = Height + 'px';
-		this._S.style.left = Left ? (Left + 'px') : '0';
-		this._S.style.top = Top ? (Top + 'px') : '0';
+		this._SH.style.width = (Width + this._O) + 'px';
+		this._SH.style.height = (Height + this._O) + 'px';
+		this._S.style.left = ((Left ? Left : 0) + -this._O) + 'px';
+		this._S.style.top = ((Top ? Top : 0) + -this._O) + 'px';
 		this._S.style.opacity = .8;
 	}
 	Hide() {
