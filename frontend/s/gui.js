@@ -26,8 +26,9 @@ export class GUI {
 		}
 
 		this._C.MoveByViewpoint = WantPanelMode;
-		this._C.FillMode = !WantPanelMode;
 		this._C.HideNonFocusPages = !WantPanelMode;
+		if (WantPanelMode)
+			this._C.FillMode = false;
 
 		// TODO: Pop up with switch message.
 		this._PanelMode = WantPanelMode;
@@ -51,6 +52,11 @@ export class GUI {
 			case 'KeyP':
 				this.SwitchMode(!this._PanelMode);
 				e.preventDefault();
+				break;
+			case 'KeyF':
+				this._C.FillMode = !this._C.FillMode;
+				e.preventDefault();
+				break;
 			default:
 				return;
 		}
