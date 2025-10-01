@@ -3,7 +3,7 @@
 // Low-level canvas handler. Positions are based on the upper-left pixel.
 const LLCanvas = new class {
 	_SetCanvas(NewX, NewY, NewZoom, Instant) {
-		let TransformString = `scale(${NewZoom}) translate(${-NewX}px, ${-NewY}px)`;
+		let TransformString = `translate(${-NewX * NewZoom}px, ${-NewY * NewZoom}px) scale(${NewZoom})`;
 		this._C.style.transform = TransformString;
 		this._C.style.transitionDuration = Instant ? '0s' : '500ms';
 
