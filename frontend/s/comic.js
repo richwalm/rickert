@@ -264,7 +264,9 @@ export class Comic {
 		if (PageNumber != this._P) {
 			this._ShowHidePage(this._P, false);
 			this._P = PageNumber;
-			for (let i = PageNumber - this._SafeNeighhours; i <= PageNumber + this._SafeNeighhours; i++)
+			for (let i = PageNumber; i <= PageNumber + this._SafeNeighhours; i++)
+				this.LoadPage(i);
+			for (let i = PageNumber - 1; i >= PageNumber - this._SafeNeighhours; i--)
 				this.LoadPage(i);
 			this._ShowHidePage(PageNumber, true);
 		}
