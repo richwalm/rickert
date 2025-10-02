@@ -20,7 +20,7 @@ body {
 	position: absolute;
 }
 
-/* Middle message. */
+/* Middle message */
 #msg {
 	display: flex;
 	justify-content: center;
@@ -52,6 +52,20 @@ body {
 td { background: #000; padding: 0; }
 #shadehole { background: none; height: 0; width: 0; transition: width 500ms, height 500ms; box-shadow: inset 0 0 10px 10px black; }
 
+/* Canvas page */
 .p { transition: opacity 500ms; }
 
+/* Viewpoints */
 .vp { box-shadow: red 0 0 100px inset; font-size: 5em; color: red; overflow: hidden; font-family: monospace; text-shadow: 0 0 10px white; user-select: none; }
+
+/* GUI */
+#left, #right {
+	position: fixed;
+	width: 25%;
+	height: 100%;
+	cursor: pointer;
+	-webkit-tap-highlight-color: #0002;
+}
+#right {
+	right: 0;
+}

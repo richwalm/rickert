@@ -7,6 +7,8 @@ export class GUI {
 		if (this._C.HasViewpoints)
 			this.SwitchMode(true);
 		addEventListener('keydown', this._HandleKey.bind(this));
+		document.getElementById('left').addEventListener('click', this._MovePageKey.bind(this, 0));
+		document.getElementById('right').addEventListener('click', this._MovePageKey.bind(this, 1));
 	}
 
 	static SetMessage(Message) {
