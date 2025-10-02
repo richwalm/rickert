@@ -54,4 +54,4 @@ td { background: #000; padding: 0; }
 
 .p { transition: opacity 500ms; }
 
-.vp { box-shadow: red 0 0 100px inset; font-size: 5em; color: red; overflow: hidden; font-family: monospace; text-shadow: 0 0 10px white; }
+.vp { box-shadow: red 0 0 100px inset; font-size: 5em; color: red; overflow: hidden; font-family: monospace; text-shadow: 0 0 10px white; user-select: none; }
