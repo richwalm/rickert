@@ -22,7 +22,7 @@ body {
 
 /* Middle message. */
 #msg {
-	display: none;
+	display: flex;
 	justify-content: center;
 	align-items: center;
 	text-align: center;
