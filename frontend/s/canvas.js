@@ -94,6 +94,7 @@ const LLCanvas = new class {
 		this._SY = MinY; this._SMY = MaxY;
 		this._FS.style.display = 'block';
 		this._FS.addEventListener('scroll', this._UR);
+		this._FS.focus();
 	}
 
 	DisableScrollbars() {
