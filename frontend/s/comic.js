@@ -9,6 +9,7 @@ export class Comic {
 		this._Total = 0;
 		this._P = -1; // Current page.
 		this._VP = null; // Current viewpoint.
+		this._ExtraPages = 0;	// For multiple page mode.
 
 		this._X = X; this._Y = Y; // Canvas offset.
 		this._ElementOffsets = []; // Canvas location for each element (X1, Y1, X2, Y2). Doesn't include the above offset.
@@ -22,7 +23,7 @@ export class Comic {
 
 		// Constants.
 		this._SafeNeighhours = 2; // Always keep this amount around the current page loaded.
-		this._MaxLoaded = 7;		// Max pages to keep loaded.
+		this._MaxLoaded = 5;		// Max pages to keep loaded.
 		this._AddVPs = false;		// App VPs boxes to pages.
 
 		// Flags.
@@ -61,12 +62,16 @@ export class Comic {
 			this._Viewpoints = Meta.Viewpoints;
 	}
 
+	IsPageVisible(PageNumber, Padding = 0) {
+		return !(PageNumber < this._P - Padding || PageNumber > this._P + this._ExtraPages + Padding);
+	}
+
 	// Setters & getters.
 	set HideNonFocusPages(Value) {
 		if (this._HideNonFocusPages == Value)
 			return;
 		this._Loaded.forEach((Slot, Key) => {
-			Slot.Ele.style.opacity = (!Value || Key == this._P ? 1 : 0);
+			Slot.Ele.style.opacity = (!Value || this.IsPageVisible(Key) ? 1 : 0);
 		});
 		this._HideNonFocusPages = Value;
 	}
@@ -75,11 +80,11 @@ export class Comic {
 	set MoveByViewpoint(Value) {
 		if (this._MoveByViewpoint == Value)
 			return;
-		if (!Value)
-			this._VP = null;
-		else
-			this._VP = (this._Viewpoints[this._P] ? 0 : null)
-		this.SetPage(this._P, this._VP);
+		const MinPage = Math.max(0, this._P);
+		let VP = null;
+		if (Value)
+			VP = (this._Viewpoints[MinPage] ? 0 : null)
+		this.SetPage(MinPage, VP, 0);
 		this._MoveByViewpoint = Value;
 	}
 	get MoveByViewpoint() { return this._MoveByViewpoint; };
@@ -109,7 +114,7 @@ export class Comic {
 		if (this._FillMode == Value)
 			return;
 		HLCanvas.FillMode = Value;
-		this.SetPage(this._P, this._VP);
+		this.SetPage(this._P, this._VP, this._ExtraPages);
 		this._FillMode = Value;
 	}
 	get FillMode() { return this._FillMode; };
@@ -131,8 +136,19 @@ export class Comic {
 		}
 	}
 
-	_SetFocus(PageNumber, ViewpointNumber) {
-		const Offset = this._ElementOffsets[PageNumber];
+	_SetFocus(PageNumber, ViewpointNumber, ExtraPages) {
+		let Offset = this._ElementOffsets[PageNumber];
+		if (ExtraPages) {
+			Offset = structuredClone(Offset);
+			// Combine any extra pages.
+			for (let i = 0; i < ExtraPages; i++) {
+				const ExtraPage = this._ElementOffsets[PageNumber + i + 1];
+				Offset.X1 = Math.min(Offset.X1, ExtraPage.X1);
+				Offset.Y1 = Math.min(Offset.Y1, ExtraPage.Y1);
+				Offset.X2 = Math.max(Offset.X2, ExtraPage.X2);
+				Offset.Y2 = Math.max(Offset.Y2, ExtraPage.Y2);
+			}
+		}
 
 		let FX = (this._PDX >= 0 ? Offset.X1 : Offset.X2) + this._X;
 		let FY = (this._PDY >= 0 ? Offset.Y1 : Offset.Y2) + this._Y;
@@ -162,14 +178,13 @@ export class Comic {
 	}
 
 	_CullLoadedPages() {
-		let ToRemove = this._Loaded.size - this._MaxLoaded;
+		let ToRemove = this._Loaded.size - (this._MaxLoaded - 1); // -1 for the upcoming page slot.
 		if (ToRemove <= 0)
 			return;
 
 		for (const [Key] of this._Loaded) {
 			// Avoid removing pages around the current page.
-			let Diff = Key - this._P;
-			if (Math.abs(Diff) <= this._SafeNeighhours)
+			if (this.IsPageVisible(Key, this._SafeNeighhours))
 				continue;
 
 			const Page = this._Loaded.get(Key);
@@ -240,39 +255,51 @@ export class Comic {
 		console.log('Loading page', PageNumber);
 	}
 
-	_ShowHidePage(PageNumber, Show) {
+	_ShowHidePage(PageNumber, Extra, Show) {
 		if (!this._HideNonFocusPages)
 			return;
-		const Slot = this._Loaded.get(PageNumber);
-		if (!Slot)
-			return;
-		Slot.Ele.style.opacity = (Show ? 1 : 0);
+		for (let i = 0; i <= Extra; i++) {
+			const Slot = this._Loaded.get(PageNumber + i);
+			if (!Slot)
+				continue;
+			Slot.Ele.style.opacity = (Show ? 1 : 0);
+		}
 		return;
 	}
 
-	SetPage(PageNumber, ViewpointNumber = null) {
-		// Loads the page and pages around it, and set the focus.
-		if (PageNumber < 0 || PageNumber >= this._Total)
+	SetPage(PageNumber, ViewpointNumber = null, ExtraPages = 0) {
+		if (PageNumber >= this._Total)
 			return false;
-
 		if (ViewpointNumber !== null) {
 			const Viewpoints = this._Viewpoints[PageNumber];
 			if (!Viewpoints || ViewpointNumber < 0 || ViewpointNumber >= Viewpoints.length)
 				return false;
+			ExtraPages = 0;	// If provided both for some reason, we'll remove extras.
 		}
+		if (PageNumber + ExtraPages < 0)
+			return false;
 
-		if (PageNumber != this._P) {
-			this._ShowHidePage(this._P, false);
+		if (PageNumber != this._P || ExtraPages != this._ExtraPages) {
+			this._ShowHidePage(this._P, this._ExtraPages, false);
+
+			// Set this here early so LoadPage know what to cull.
 			this._P = PageNumber;
-			for (let i = PageNumber; i <= PageNumber + this._SafeNeighhours; i++)
+			this._ExtraPages = ExtraPages;
+			// With extra pages, turn off viewpoints.
+			if (this._ExtraPages)
+				this._MoveByViewpoint = false;
+			for (let i = PageNumber; i <= PageNumber + ExtraPages + this._SafeNeighhours; i++)
 				this.LoadPage(i);
 			for (let i = PageNumber - 1; i >= PageNumber - this._SafeNeighhours; i--)
 				this.LoadPage(i);
-			this._ShowHidePage(PageNumber, true);
+			this._ShowHidePage(PageNumber, ExtraPages, true);
 		}
 
 		this._VP = ViewpointNumber;
-		this._SetFocus(PageNumber, ViewpointNumber);
+		const MinPage = Math.max(0, PageNumber);
+		const MaxPage = Math.min(this._Total - 1, PageNumber + ExtraPages);
+		const ValidExtraPages = MaxPage - MinPage;
+		this._SetFocus(MinPage, ViewpointNumber, ValidExtraPages);
 		return true;
 	}
 
@@ -287,7 +314,7 @@ export class Comic {
 		}
 
 		if (!this._MoveByViewpoint)
-			return this.SetPage(this._P + Direction);
+			return this.SetPage(this._P + ((this._ExtraPages + 1) * Direction), null, this._ExtraPages);
 
 		// Move by viewpoint.
 		const Viewpoints = this._Viewpoints[this._P];
@@ -300,7 +327,7 @@ export class Comic {
 			else
 				NewVP += Direction;
 			if (!(NewVP < 0 || NewVP >= Viewpoints.length))
-				return this.SetPage(this._P, NewVP);
+				return this.SetPage(this._P, NewVP, 0);
 		}
 
 		// Head to next or previous page.
@@ -312,7 +339,7 @@ export class Comic {
 
 		let NewPage = this._P + Direction;
 		let NewVP = GetFirstOrLastViewpoint(this._Viewpoints[NewPage], Direction);
-		return this.SetPage(NewPage, NewVP);
+		return this.SetPage(NewPage, NewVP, 0);
 	}
 
 	// Calculate poisition of pages.
