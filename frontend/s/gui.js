@@ -7,8 +7,14 @@ export class GUI {
 		if (this._C.HasViewpoints)
 			this.SwitchMode(true);
 		addEventListener('keydown', this._HandleKey.bind(this));
-		document.getElementById('left').addEventListener('click', this._MovePageKey.bind(this, 0));
-		document.getElementById('right').addEventListener('click', this._MovePageKey.bind(this, 1));
+		const LeftArea = document.getElementById('left');
+		const RightArea = document.getElementById('right');
+		LeftArea.addEventListener('click', this._MovePageKey.bind(this, 0));
+		RightArea.addEventListener('click', this._MovePageKey.bind(this, 1));
+		LeftArea.addEventListener('mouseenter', (e) => { LeftArea.firstChild.style.opacity = 1; });
+		LeftArea.addEventListener('mouseleave', (e) => { LeftArea.firstChild.style.opacity = 0; });
+		RightArea.addEventListener('mouseenter', (e) => { RightArea.firstChild.style.opacity = 1; });
+		RightArea.addEventListener('mouseleave', (e) => { RightArea.firstChild.style.opacity = 0; });
 	}
 
 	static SetMessage(Message) {
