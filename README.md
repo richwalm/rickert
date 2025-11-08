@@ -1,4 +1,4 @@
-# Rickert Comic Book Viewer
+# ![Rickert Logo](logo.png) Rickert Comic Book Viewer
 Rickert is a web-based comic book viewer that features a panel by panel mode. It has been built from the ground up to be functional on small screen devices, such as mobiles.
 
 ## Status
