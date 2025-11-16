@@ -75,6 +75,12 @@ export class GUI {
 				this._C.FillMode = !this._C.FillMode;
 				e.preventDefault();
 				break;
+			case 'KeyD':
+				const ExtraPages = this._C.ExtraPages > 0 ? 0 : 1;
+				this._C.HideNonFocusPages = false;
+				this._C.ExtraPages = ExtraPages;
+				e.preventDefault();
+				break;
 			default:
 				return;
 		}

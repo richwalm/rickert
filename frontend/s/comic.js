@@ -119,6 +119,14 @@ export class Comic {
 	}
 	get FillMode() { return this._FillMode; };
 
+	set ExtraPages(Value) {
+		if (this._ExtraPages == Value)
+			return;
+		this.SetPage(this._P, null, Value);
+		return;
+	}
+	get ExtraPages() { return this._ExtraPages; }
+
 	_CalcEleSize(ImageSize) {
 		// Returns element size, but takes in account of forcing a size, keeping the ratio when needed.
 		if (this._FW && this._FH)
