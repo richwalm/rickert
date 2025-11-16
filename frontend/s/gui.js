@@ -78,6 +78,7 @@ export class GUI {
 			case 'KeyD':
 				const ExtraPages = this._C.ExtraPages > 0 ? 0 : 1;
 				this._C.HideNonFocusPages = true;
+				this._PanelMode = false;
 				this._C.ExtraPages = ExtraPages;
 				e.preventDefault();
 				break;
