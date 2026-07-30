@@ -2,11 +2,9 @@
 
 import { HLCanvas } from './canvas.js';
 
-export class Comic {
-	constructor(Meta, BasePath = '', X = 0, Y = 0) {
-		this._M = Meta;
-		this._BP = BasePath;
-		this._Total = 0;
+export class Layout {
+	constructor(Loader, X = 0, Y = 0) {
+		this._Loader = Loader;
 		this._P = -1; // Current page.
 		this._VP = null; // Current viewpoint.
 		this._ExtraPages = 0;	// For multiple page mode.
@@ -18,8 +16,7 @@ export class Comic {
 		this._PDX = 1; this._PDY = 0; // Direction to add elements to the canvas.
 		this._Padding = 0; // Padding between elements.
 
-		this._ImageSizes = []; // Size of each image. Might contains gaps if streaming.
-		this._Loaded = new Map();	// Track of each loaded page, including image and element.
+		this._Loaded = new Map();	// Track of each loaded page, including image element and its parent.
 
 		// Constants.
 		this._SafeNeighhours = 2; // Always keep this amount around the current page loaded.
@@ -31,8 +28,16 @@ export class Comic {
 		this._HideNonFocusPages = false;
 		this._FillMode = false;
 
-		// Use what we can from the meta.
-		if (Meta.Pages) {
+		// Panels.
+		this._Viewpoints = [];
+	}
+
+	async ReadMeta() {
+		const Meta = await this._Loader.LoadMeta();
+		if (!Meta)
+			return;
+
+		if (Meta.ImageSizes) {
 			if (Meta.Direction) {
 				switch (Meta.Direction) {
 					case 'Left':
@@ -49,15 +54,11 @@ export class Comic {
 						break;
 				}
 			}
-			this._ImageSizes = Meta.Pages;
-			this._Total = Meta.Pages.length;
-			for (let i = 0; i < Meta.Pages.length; i++)
-				this._ElementSizes[i] = this._CalcEleSize(Meta.Pages[i]);
+			for (let i = 0; i < Meta.ImageSizes.length; i++)
+				this._ElementSizes[i] = this._CalcEleSize(Meta.ImageSizes[i]);
 			this._CalcEleOffsets();
 		}
 
-		// Panels.
-		this._Viewpoints = [];
 		if (Meta.Viewpoints)
 			this._Viewpoints = Meta.Viewpoints;
 	}
@@ -175,16 +176,6 @@ export class Comic {
 		HLCanvas.SetFocus(X, Y, X + W, Y + H, FX, FY);
 	}
 
-	_LoadedImage(Slot, PageNumber) {
-		Slot.Ele.style.backgroundColor = 'White';
-		console.log('Finished loading page', PageNumber);
-	}
-	_LoadedImageError(Slot, PageNumber) {
-		Slot.Image.remove();
-		Slot.Ele.style.backgroundColor = 'Red'; // TODO: Better error.
-		console.error('Failed to load page', PageNumber);
-	}
-
 	_CullLoadedPages() {
 		let ToRemove = this._Loaded.size - (this._MaxLoaded - 1); // -1 for the upcoming page slot.
 		if (ToRemove <= 0)
@@ -197,6 +188,7 @@ export class Comic {
 
 			const Page = this._Loaded.get(Key);
 			Page.Ele.remove();
+			this._Loader.UnloadImage(Key);
 			this._Loaded.delete(Key);
 			console.log('Culled page', Key);
 			if (--ToRemove <= 0)
@@ -223,11 +215,13 @@ export class Comic {
 	LoadPage(PageNumber) {
 		if (this._Loaded.has(PageNumber)) // Already loaded.
 			return;
-		if (PageNumber < 0 || PageNumber >= this._Total)
+		if (PageNumber < 0 || PageNumber >= this._Loader.MaxImages)
 			return;
 		this._CullLoadedPages();
 		let Slot = {};
 
+		// TODO: The below won't be set when streaming, so we'll need to work something out.
+		// Use the previous page size, or use a default.
 		const EleSize = this._ElementSizes[PageNumber];
 
 		// Create a DOM Element.
@@ -250,17 +244,27 @@ export class Comic {
 				this._AddVPEles(Ele, Viewpoints);
 		}
 
-		// Download image in the loading zone.
-		// Loading zone is used to obtain the image size earlier by an observer.
-		const EleImage = new Image();
-		Slot['Image'] = EleImage;
-		EleImage.onload = this._LoadedImage.bind(this, Slot, PageNumber);
-		EleImage.onerror = this._LoadedImageError.bind(this, Slot, PageNumber);
-		Ele.appendChild(EleImage);
-		EleImage.src = this._BP + (PageNumber + 1) + '.jpg';
-
 		this._Loaded.set(PageNumber, Slot);
 		console.log('Loading page', PageNumber);
+
+		// Download image in the loading zone.
+		this._Loader.LoadImage(PageNumber).then((Img) => {
+			// TODO: If we're here, we have the image size.
+			// Use _CalcEleSize to calculate element size.
+			// If different than what's been recorded, redo the panels from this page forward with _CalcEleOffsets.
+			if (!Ele.isConnected) {
+				this._Loader.UnloadImage(PageNumber);
+				console.log('Loaded image', PageNumber, 'but page has been removed!');
+				return;
+			}
+			Slot['Image'] = Img;
+			Ele.appendChild(Img);
+			Ele.style.backgroundColor = 'White';
+			console.log('Finished loading page', PageNumber);
+		}).catch((Err) => {
+			Ele.style.backgroundColor = 'Red'; // TODO: Better error.
+			console.error(`Failed to load page ${PageNumber}: ${Err}`);
+		});
 	}
 
 	_ShowHidePage(PageNumber, Extra, Show) {
@@ -276,7 +280,7 @@ export class Comic {
 	}
 
 	SetPage(PageNumber, ViewpointNumber = null, ExtraPages = 0) {
-		if (PageNumber >= this._Total)
+		if (PageNumber >= this._Loader.MaxImages)
 			return false;
 		if (ViewpointNumber !== null) {
 			const Viewpoints = this._Viewpoints[PageNumber];
@@ -305,7 +309,7 @@ export class Comic {
 
 		this._VP = ViewpointNumber;
 		const MinPage = Math.max(0, PageNumber);
-		const MaxPage = Math.min(this._Total - 1, PageNumber + ExtraPages);
+		const MaxPage = Math.min(this._Loader.MaxImages - 1, PageNumber + ExtraPages);
 		const ValidExtraPages = MaxPage - MinPage;
 		this._SetFocus(MinPage, ViewpointNumber, ValidExtraPages);
 		return true;
@@ -390,6 +394,10 @@ export class Comic {
 			this._ElementOffsets[i] = NP;
 			P = NP;
 		}
+
+		// TODO: Make this an instant change.
+		if (this._P >= StartOffset)
+			this.SetPage(this._P, this._VP, this._ExtraPages);
 	}
 
 }
