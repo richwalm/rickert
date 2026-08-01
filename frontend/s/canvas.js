@@ -2,14 +2,17 @@
 
 // Low-level canvas handler. Positions are based on the upper-left pixel.
 const LLCanvas = new class {
-	_SetCanvas(NewX, NewY, NewZoom, Instant) {
+	get Speed() { return this._Speed; }
+	set Speed(Var) { this._C.style.transitionDuration = (this._Speed = Var) + 's'; }
+
+	_SetCanvas(NewX, NewY, NewZoom) {
 		let TransformString = `translate(${-NewX * NewZoom}px, ${-NewY * NewZoom}px) scale(${NewZoom})`;
 		this._C.style.transform = TransformString;
-		this._C.style.transitionDuration = Instant ? '0s' : '500ms';
 
 		this._X = NewX;
 		this._Y = NewY;
 		this._Zoom = NewZoom;
+		this.Speed = 0.5;
 	}
 
 	get Width() { return this._C.offsetWidth; }
@@ -41,9 +44,9 @@ const LLCanvas = new class {
 		addEventListener('load', this._UR);
 	}
 
-	SetPos(NewX, NewY, NewZoom = this._Zoom, Instant = false) {
+	SetPos(NewX, NewY, NewZoom = this._Zoom) {
 		if (!this._ScrollBars) {
-			this._SetCanvas(NewX, NewY, NewZoom, Instant);
+			this._SetCanvas(NewX, NewY, NewZoom);
 			return;
 		}
 
@@ -63,12 +66,12 @@ const LLCanvas = new class {
 		SL = Clamp(SL, 0, this._FS.scrollWidth - this._FS.clientWidth);
 		ST = Clamp(ST, 0, this._FS.scrollHeight - this._FS.clientHeight);
 		if (Math.round(SL) == Math.round(this._FS.scrollLeft) && Math.round(ST) == Math.round(this._FS.scrollTop)) {  // Rounding needed for JavaScript precision.
-			this._SetCanvas(this._SX + (this._FS.scrollLeft / this._Zoom), this._SY + (this._FS.scrollTop / this._Zoom), this._Zoom, Instant);
+			this._SetCanvas(this._SX + (this._FS.scrollLeft / this._Zoom), this._SY + (this._FS.scrollTop / this._Zoom), this._Zoom);
 			return;
 		}
 
-		this._SetCanvas(this._SX + (SL / this._Zoom), this._SY + (ST / this._Zoom), this._Zoom, Instant);
-		if (Instant) {
+		this._SetCanvas(this._SX + (SL / this._Zoom), this._SY + (ST / this._Zoom), this._Zoom);
+		if (!this._Speed) {
 			this._FS.scroll(SL, ST);
 		} else {
 			this._FS.removeEventListener('scroll', this._UR);
@@ -106,22 +109,30 @@ const LLCanvas = new class {
 
 // Shades part of the page we're not looking at.
 const Shade = new class {
+	get Speed() { return this._Speed; }
+	set Speed(Var) { this._SH.style.transitionDuration = (this._Speed = Var) + 's'; }
+
 	constructor() {
 		this._S = document.getElementById('shade');
 		this._SH = document.getElementById('shadehole');
 		this._O = 10;
+		this.Speed = 0.5;
+		this._Opacity = 0.8;
 	}
 
 	SetSize(Width, Height, Left, Top) {
 		this._SH.style.width = (Width + this._O) + 'px';
 		this._SH.style.height = (Height + this._O) + 'px';
+		this._SH.style.transitionDuration = this._Speed + 's';
 		this._S.style.left = ((Left ? Left : 0) + -this._O) + 'px';
 		this._S.style.top = ((Top ? Top : 0) + -this._O) + 'px';
-		this._S.style.opacity = .8;
+		this._S.style.opacity = this._Opacity;
 	}
 	Hide() {
 		this._S.style.opacity = 0;
 	}
+	get DefaultOpacity() { return this._Opacity; }
+	set DefaultOpacity(Var) { this._Opacity = Var; }
 }();
 
 // Higher-level canvas handler. Positions are rectangles and will adjust zooming by fitting or fill these.
@@ -262,4 +273,8 @@ export const HLCanvas = new class {
 	set FillMode(Mode) { this._FillMode = Mode; }
 	get FillMode() { return this._FillMode; }
 	get Canvas() { return this._LL.Canvas; }
+	get Speed() { return this._LL.Speed; }
+	set Speed(Var) { this._LL.Speed = this._S.Speed = Var; }
+	get ShadeOpacity() { return this._S.Opacity; }
+	set ShadeOpacity(Var) { this._S.Opacity = Var; }
 }(LLCanvas, Shade);

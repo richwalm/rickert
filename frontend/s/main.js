@@ -12,11 +12,11 @@ function LoadComic(BasePath) {
 	La = new Layout(L);
 	G = new GUI(La);
 	La.ReadMeta().then(() => {
-		La.SetPage(0);
 	}).catch((Err) => {
-		console.error('Unable to load comic metadata. Working in a streaming mode.', Err);
+		console.error('Unable to load comic metadata. Operating in streaming mode.', Err);
 	}).finally(() => {
 		GUI.SetMessage(false);
+		La.SetPage(0);
 	});
 
 	globalThis.L = L;

@@ -212,26 +212,53 @@ export class Layout {
 		});
 	}
 
+	get _FindDefaultEleSize() {
+		if (!this._ElementSizes.length)
+			return this._CalcEleSize([1810, 2560]);	// This is as good as default as anything.
+
+		// We'll use the median (kinda half baked). Seems like the best method to find a standard page size.
+		const SortedSizes = this._ElementSizes.toSorted((A, B) => {
+			return (A[0] * A[1]) - (B[0] * B[1]);
+		});
+		return SortedSizes[Math.floor(SortedSizes.length / 2)];	
+	}
+	_FillEleSize(NewSize, Max) {
+		const Count = Max - this._ElementSizes.length;
+		for (let i = 0; i <= Count; i++)
+			this._ElementSizes.push([NewSize[0], NewSize[1]]);
+	}
+
+	_SetPageSizePos(Ele, EleSize, PageNumber) {
+		Ele.style.width = EleSize[0] + 'px';
+		Ele.style.height = EleSize[1] + 'px';
+		const EleOffset = this._ElementOffsets[PageNumber];
+		Ele.style.transform = `translate(${EleOffset.X1 + this._X}px, ${EleOffset.Y1 + this._Y}px)`;
+	}
+
+	// Load a page.
 	LoadPage(PageNumber) {
 		if (this._Loaded.has(PageNumber)) // Already loaded.
 			return;
-		if (PageNumber < 0 || PageNumber >= this._Loader.MaxImages)
+		if (PageNumber < 0 || PageNumber > this._Loader.MaxImages)
 			return;
 		this._CullLoadedPages();
 		let Slot = {};
 
-		// TODO: The below won't be set when streaming, so we'll need to work something out.
-		// Use the previous page size, or use a default.
-		const EleSize = this._ElementSizes[PageNumber];
+		let EleSize = this._ElementSizes[PageNumber];
+		if (!EleSize) {
+			// If missing elements sizes, fill them up to this point.
+			const NewEleSize = this._FindDefaultEleSize;
+			const StartOffset = this._ElementSizes.length;
+			this._FillEleSize(NewEleSize, PageNumber);	// Set here.
+			this._CalcEleOffsets(StartOffset);	// Calculate offset positions.
+			EleSize = NewEleSize;
+		}
 
 		// Create a DOM Element.
 		const Ele = document.createElement('div');
 		Slot['Ele'] = Ele;
 		Ele.classList.add('p');
-		Ele.style.width = EleSize[0] + 'px';
-		Ele.style.height = EleSize[1] + 'px';
-		const EleOffset = this._ElementOffsets[PageNumber];
-		Ele.style.transform = `translate(${EleOffset.X1 + this._X}px, ${EleOffset.Y1 + this._Y}px)`;
+		this._SetPageSizePos(Ele, EleSize, PageNumber);
 		Ele.style.backgroundColor = (PageNumber & 1 ? 'Gray' : 'Silver'); // TODO: Use loading graphic.
 		if (this._HideNonFocusPages)
 			Ele.style.opacity = 0;
@@ -249,13 +276,19 @@ export class Layout {
 
 		// Download image in the loading zone.
 		this._Loader.LoadImage(PageNumber).then((Img) => {
-			// TODO: If we're here, we have the image size.
-			// Use _CalcEleSize to calculate element size.
-			// If different than what's been recorded, redo the panels from this page forward with _CalcEleOffsets.
 			if (!Ele.isConnected) {
 				this._Loader.UnloadImage(PageNumber);
 				console.log('Loaded image', PageNumber, 'but page has been removed!');
 				return;
+			}
+			const ImgSize = this._Loader.GetImageSize(PageNumber);
+			const NewEleSize = this._CalcEleSize(ImgSize);
+			// Element size changed.
+			if (EleSize[0] != NewEleSize[0] || EleSize[1] != NewEleSize[1]) {
+				console.log('Loaded image for page', PageNumber, 'has a different element size. Recalculating view.')
+				this._ElementSizes[PageNumber] = NewEleSize;
+				this._CalcEleOffsets(PageNumber);
+				// this._SetPageSizePos(Ele, NewEleSize, PageNumber); // No need. Part of the above function.
 			}
 			Slot['Image'] = Img;
 			Ele.appendChild(Img);
@@ -263,7 +296,7 @@ export class Layout {
 			console.log('Finished loading page', PageNumber);
 		}).catch((Err) => {
 			Ele.style.backgroundColor = 'Red'; // TODO: Better error.
-			console.error(`Failed to load page ${PageNumber}: ${Err}`);
+			console.error('Failed to load page', PageNumber, ':', Err);
 		});
 	}
 
@@ -279,8 +312,9 @@ export class Layout {
 		return;
 	}
 
+	// Set the page/viewpoint focus.
 	SetPage(PageNumber, ViewpointNumber = null, ExtraPages = 0) {
-		if (PageNumber >= this._Loader.MaxImages)
+		if (PageNumber > this._Loader.MaxImages)
 			return false;
 		if (ViewpointNumber !== null) {
 			const Viewpoints = this._Viewpoints[PageNumber];
@@ -309,14 +343,14 @@ export class Layout {
 
 		this._VP = ViewpointNumber;
 		const MinPage = Math.max(0, PageNumber);
-		const MaxPage = Math.min(this._Loader.MaxImages - 1, PageNumber + ExtraPages);
+		const MaxPage = Math.min(this._Loader.MaxImages, PageNumber + ExtraPages);
 		const ValidExtraPages = MaxPage - MinPage;
 		this._SetFocus(MinPage, ViewpointNumber, ValidExtraPages);
 		return true;
 	}
 
+	// Move forward or back by pages or viewpoints.
 	Move(Direction) {
-		// Move forward or back by pages or viewpoints.
 		switch (Direction) {
 			case -1:
 			case 1:
@@ -375,6 +409,7 @@ export class Layout {
 	}
 	_CalcEleOffsets(StartOffset = 0) {
 		let P;
+		const RawStart = StartOffset;
 		if (!StartOffset) {
 			// Initial page.
 			const S = this._ElementSizes[0];
@@ -395,9 +430,20 @@ export class Layout {
 			P = NP;
 		}
 
-		// TODO: Make this an instant change.
-		if (this._P >= StartOffset)
+		// Update any elements already loaded.
+		this._Loaded.forEach((Slot, Key) => {
+			const EleSize = this._ElementSizes[Key];
+			this._SetPageSizePos(Slot.Ele, EleSize, Key);
+		});
+
+		// If we're beyond the update offset, repositon focus.
+		if (this._P >= RawStart) {
+			console.log('Instant snapping to', this._P, 'due to earlier page', RawStart, 'reposition.');
+			const OldSpeed = HLCanvas.Speed;
+			HLCanvas.Speed = 0;
 			this.SetPage(this._P, this._VP, this._ExtraPages);
+			HLCanvas.Speed = OldSpeed;
+		}
 	}
 
 }

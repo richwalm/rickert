@@ -14,8 +14,8 @@ export class Loader {
 	_ReadMeta(Meta) {
 		this._Meta = Meta;
 		if (Meta.ImageSizes) {
-			this._MaxValidImage = Meta.ImageSizes.length;
-			this._MaxDeadImage = this._MaxValidImage + 1;
+			this._MaxValidImage = Meta.ImageSizes.length - 1;
+			this._MaxDeadImage = this._MaxValidImage;
 			this._ImageSizes = Meta.ImageSizes;
 		}
 	}
@@ -23,11 +23,14 @@ export class Loader {
 	get MaxImages() {
 		return this._MaxDeadImage;
 	}
+	get IsStreaming() {
+		return (this._MaxValidImage < this._MaxDeadImage);
+	}
 
 	_CheckCache(Number) {
 		const Loaded = this._Loaded.get(Number);
 		if (Loaded)
-			console.log(`Provided cache image ${Number}.`);
+			console.log('Provided cache image', Number);
 		return Loaded;
 	}
 
@@ -39,7 +42,7 @@ export class Loader {
 		this._Loaded.delete(Number);
 	}
 
-	ImageSize(Number) {
+	GetImageSize(Number) {
 		return this._ImageSizes[Number];
 	}
 }
