@@ -61,6 +61,8 @@ export class Layout {
 
 		if (Meta.Viewpoints)
 			this._Viewpoints = Meta.Viewpoints;
+
+		return Meta;
 	}
 
 	IsPageVisible(PageNumber, Padding = 0) {

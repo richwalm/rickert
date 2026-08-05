@@ -10,9 +10,6 @@ export class HTTPLoader extends Loader {
 	constructor(BasePath = '', Extension) {
 		super();
 
-		if (BasePath && !BasePath.endsWith('/'))
-			BasePath += '/';
-
 		if (!Extension)
 			Extension = '.jpg';
 
@@ -55,28 +52,30 @@ export class HTTPLoader extends Loader {
 		return Img.decode().then(() => {
 			this._ImageSizes[Number] = [Img.width, Img.height];
 			this._Loaded.set(Number, Img);
-			if (Number > this._MaxValidImage)
-				this._MaxValidImage = Number;
 			console.log('Loaded image', Number);
 			return Img;
 		}).catch((Err) => {
 			console.error('Failed to load image', Number, ':', Err);
-			if (Number < this._MaxDeadImage) {
-				// Check if this is an actual 404 error, meaning the end of the comic.
-				// Wish we could get this from this same error, avoiding the additional connection.
-				fetch(Img.src).then((Resp) => {
-					if (Resp.status == 404) {
-						this._MaxDeadImage = Math.min(Number - 1, this._MaxDeadImage);	// Use min in case multiple requests are occuring.
-						console.log('Reached 404 error at image', Number);
-						// TODO: Send a message back to the layout so these elements can be purged.
-					} else
-						throw new Error(`Got ${Resp.status} from fetch() when image ${Number} failed decoding.`);
-				}).catch((Err => {
-					console.error('404 fetch() check test failed for image', Number, ':', Err);
-				}));
-			}
-			return Err;
+			// Wish there was a way to get the status code from Err, but there isn't so we have to do this.
+			this._EndOfImagesCheck(Img.src, Number);
+			throw Err;
 		});
+	}
+
+	_EndOfImagesCheck(Src, Number) {
+		if (Number >= this._MaxDeadImage)
+			return;
+
+		fetch(Src).then((Resp) => {
+			if (Resp.status == 404) {
+				this._MaxDeadImage = Math.min(Number - 1, this._MaxDeadImage);	// Use min in case multiple requests are occuring.
+				console.log('Reached 404 error at image', Number);
+				// TODO: Send a message back to the layout so any extra elements can be deleted.
+			} else
+				throw new Error(`Got ${Resp.status} from fetch() when image ${Number} failed decoding.`);
+		}).catch((Err => {
+			console.error('404 fetch() check test failed for image', Number, ':', Err);
+		}));
 	}
 }
 
