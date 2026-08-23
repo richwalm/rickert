@@ -12,7 +12,7 @@ export class Loader {
 
 	_ReadMeta(Meta) {
 		this._Meta = Meta;
-		if (Meta.ImageSizes) {
+		if (Meta && Meta.ImageSizes) {
 			this._ImageSizes = Meta.ImageSizes;
 			this._MaxDeadImage = Meta.ImageSizes.length;
 		}
@@ -22,7 +22,7 @@ export class Loader {
 		return this._MaxDeadImage;
 	}
 	get IsStreaming() {
-		return (this._ImageSizes.length <= this._MaxDeadImage);
+		return (this._ImageSizes.length < this._MaxDeadImage);
 	}
 
 	_CheckCache(Number) {
@@ -33,7 +33,7 @@ export class Loader {
 	}
 
 	_OutsideRange(Number) {
-		return (Number < 0 && Number >= this._MaxDeadImage);
+		return (Number < 0 || Number >= this._MaxDeadImage);
 	}
 
 	UnloadImage(Number) {
@@ -52,6 +52,6 @@ export class Loader {
 			return (A[0] * A[1]) - (B[0] * B[1]);
 		});
 		const Mid = Math.floor(Images.length / 2);
-		return Images.length % 2 ? Images[Mid] : ((Images[Mid - 1] + Images[Mid]) / 2);
+		return Images[Mid];
 	}
 }

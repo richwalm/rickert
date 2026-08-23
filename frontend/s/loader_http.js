@@ -24,8 +24,11 @@ export class HTTPLoader extends Loader {
 
 		const URL = this._BasePath + 'meta.json';
 		return fetch(URL).then((Resp) => {
-			if (!Resp.ok)
+			if (!Resp.ok) {
+				if (Resp.status == 404)
+					return;
 				throw new Error(`Bad status code: ${Resp.status}`);
+			}
 			return Resp.json();
 		}).then((JSON) => {
 			this._ReadMeta(JSON);
@@ -68,7 +71,7 @@ export class HTTPLoader extends Loader {
 
 		fetch(Src).then((Resp) => {
 			if (Resp.status == 404) {
-				this._MaxDeadImage = Math.min(Number - 1, this._MaxDeadImage);	// Use min in case multiple requests are occuring.
+				this._MaxDeadImage = Math.min(Number, this._MaxDeadImage);	// Use min in case multiple requests are occuring.
 				console.log('Reached 404 error at image', Number);
 				// TODO: Send a message back to the layout so any extra elements can be deleted.
 			} else

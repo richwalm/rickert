@@ -22,6 +22,7 @@ export class Layout {
 		this._SafeNeighhours = 2; // Always keep this amount around the current page loaded.
 		this._MaxLoaded = 5;		// Max pages to keep loaded.
 		this._AddVPs = false;		// App VPs boxes to pages.
+		this._DefaultImageSize = [1810, 2560];	// Used for the element size when no size data is loaded.
 
 		// Flags.
 		this._MoveByViewpoint = true;
@@ -56,7 +57,7 @@ export class Layout {
 			}
 			for (let i = 0; i < Meta.ImageSizes.length; i++)
 				this._ElementSizes[i] = this._CalcEleSize(Meta.ImageSizes[i]);
-			this._CalcEleOffsets();
+			this._CalcPageOffset(0);
 		}
 
 		if (Meta.Viewpoints)
@@ -214,20 +215,10 @@ export class Layout {
 		});
 	}
 
-	get _FindDefaultEleSize() {
-		if (!this._ElementSizes.length)
-			return this._CalcEleSize([1810, 2560]);	// This is as good as default as anything.
-
-		// We'll use the median (kinda half baked). Seems like the best method to find a standard page size.
-		const SortedSizes = this._ElementSizes.toSorted((A, B) => {
-			return (A[0] * A[1]) - (B[0] * B[1]);
-		});
-		return SortedSizes[Math.floor(SortedSizes.length / 2)];	
-	}
-	_FillEleSize(NewSize, Max) {
-		const Count = Max - this._ElementSizes.length;
-		for (let i = 0; i <= Count; i++)
-			this._ElementSizes.push([NewSize[0], NewSize[1]]);
+	_MakePageSize(PageNumber) {
+		const ImgSize = this._Loader.GetImageSize(PageNumber) || this._Loader.MedianImageSize || this._DefaultImageSize;
+		const EleSize = this._ElementSizes[PageNumber] = this._CalcEleSize(ImgSize);
+		return EleSize;
 	}
 
 	_SetPageSizePos(Ele, EleSize, PageNumber) {
@@ -241,27 +232,21 @@ export class Layout {
 	LoadPage(PageNumber) {
 		if (this._Loaded.has(PageNumber)) // Already loaded.
 			return;
-		if (PageNumber < 0 || PageNumber > this._Loader.MaxImages)
+		if (PageNumber < 0 || PageNumber >= this._Loader.MaxImages)
 			return;
 		this._CullLoadedPages();
 		let Slot = {};
 
-		let EleSize = this._ElementSizes[PageNumber];
-		if (!EleSize) {
-			// If missing elements sizes, fill them up to this point.
-			const NewEleSize = this._FindDefaultEleSize;
-			const StartOffset = this._ElementSizes.length;
-			this._FillEleSize(NewEleSize, PageNumber);	// Set here.
-			this._CalcEleOffsets(StartOffset);	// Calculate offset positions.
-			EleSize = NewEleSize;
-		}
+		let EleSize = this._ElementSizes[PageNumber] || this._MakePageSize(PageNumber);
+		if (!this._ElementOffsets[PageNumber])
+			this._CalcPageOffset(PageNumber);
 
 		// Create a DOM Element.
 		const Ele = document.createElement('div');
 		Slot['Ele'] = Ele;
 		Ele.classList.add('p');
 		this._SetPageSizePos(Ele, EleSize, PageNumber);
-		Ele.style.backgroundColor = (PageNumber & 1 ? 'Gray' : 'Silver'); // TODO: Use loading graphic.
+		Ele.style.backgroundColor = (PageNumber & 1 ? 'Gray' : 'Silver'); // TODO: Use a loading graphic.
 		if (this._HideNonFocusPages)
 			Ele.style.opacity = 0;
 		HLCanvas.Canvas.appendChild(Ele);
@@ -278,19 +263,19 @@ export class Layout {
 
 		// Download image in the loading zone.
 		this._Loader.LoadImage(PageNumber).then((Img) => {
-			if (!Ele.isConnected) {
-				this._Loader.UnloadImage(PageNumber);
-				console.log('Loaded image', PageNumber, 'but page has been removed!');
-				return;
-			}
 			const ImgSize = this._Loader.GetImageSize(PageNumber);
 			const NewEleSize = this._CalcEleSize(ImgSize);
 			// Element size changed.
 			if (EleSize[0] != NewEleSize[0] || EleSize[1] != NewEleSize[1]) {
-				console.log('Loaded image for page', PageNumber, 'has a different element size. Recalculating view.')
+				console.log('Loaded image for page', PageNumber, 'has a different element size. Recalculating offsets.')
 				this._ElementSizes[PageNumber] = NewEleSize;
-				this._CalcEleOffsets(PageNumber);
-				// this._SetPageSizePos(Ele, NewEleSize, PageNumber); // No need. Part of the above function.
+				this._CalcPageOffset(PageNumber);
+			}
+
+			if (!Ele.isConnected) {
+				this._Loader.UnloadImage(PageNumber);
+				console.warn('Loaded image', PageNumber, 'but page has been removed!');
+				return;
 			}
 			Slot['Image'] = Img;
 			Ele.appendChild(Img);
@@ -316,7 +301,7 @@ export class Layout {
 
 	// Set the page/viewpoint focus.
 	SetPage(PageNumber, ViewpointNumber = null, ExtraPages = 0) {
-		if (PageNumber > this._Loader.MaxImages)
+		if (PageNumber >= this._Loader.MaxImages)
 			return false;
 		if (ViewpointNumber !== null) {
 			const Viewpoints = this._Viewpoints[PageNumber];
@@ -330,13 +315,13 @@ export class Layout {
 		if (PageNumber != this._P || ExtraPages != this._ExtraPages) {
 			this._ShowHidePage(this._P, this._ExtraPages, false);
 
-			// Set this here early so LoadPage know what to cull.
-			this._P = PageNumber;
 			this._ExtraPages = ExtraPages;
 			// With extra pages, turn off viewpoints.
 			if (this._ExtraPages)
 				this._MoveByViewpoint = false;
-			for (let i = PageNumber; i <= PageNumber + ExtraPages + this._SafeNeighhours; i++)
+			this.LoadPage(PageNumber);
+			this._P = PageNumber;	// Set here so LoadPage knows what to cull.
+			for (let i = PageNumber + 1; i <= PageNumber + ExtraPages + this._SafeNeighhours; i++)
 				this.LoadPage(i);
 			for (let i = PageNumber - 1; i >= PageNumber - this._SafeNeighhours; i--)
 				this.LoadPage(i);
@@ -390,8 +375,17 @@ export class Layout {
 		return this.SetPage(NewPage, NewVP, 0);
 	}
 
-	// Calculate poisition of pages.
-	_CalcPageBasePos(PO) {
+	// Calculate poisition of page elements.
+	_MakePageOffset(Page) {
+		const AvgImgSize = this._Loader.MedianImageSize || this._DefaultImageSize;
+		const AvgEleSize = this._CalcEleSize(AvgImgSize);
+		const X = ((AvgEleSize[0] + this._Padding) * Page) * this._PDX;
+		const Y = ((AvgEleSize[1] + this._Padding) * Page) * this._PDY;
+		const EleSize = this._ElementSizes[Page] || AvgEleSize;
+		return {'X1': X, 'Y1': Y, 'X2': X + EleSize[0], 'Y2': Y + EleSize[1]};
+	}
+	_CalcPageBasePos(PO, Forward = true) {
+		// Base position is the edge (plus padding if any) or center, depending on the direction varibles.
 		function CalcCenter(Min, Max) {
 			return ((Max - Min) / 2) + Min;
 		}
@@ -400,53 +394,76 @@ export class Layout {
 				return CalcCenter(Min, Max)
 			return Math[Dir < 0 ? 'min' : 'max'](Min - Padding, Max + Padding);
 		}
-		const X = HandleAxis(this._PDX, PO['X1'], PO['X2'], this._Padding);
-		const Y = HandleAxis(this._PDY, PO['Y1'], PO['Y2'], this._Padding);
+		const X = HandleAxis(Forward ? this._PDX : -this._PDX, PO['X1'], PO['X2'], this._Padding);
+		const Y = HandleAxis(Forward ? this._PDY : -this._PDY, PO['Y1'], PO['Y2'], this._Padding);
 		return [X, Y];
 	}
-	_CalcNewPagePos(PS) {
-		const X = ((this._PDX - 1) / 2) * PS[0];
-		const Y = ((this._PDY - 1) / 2) * PS[1];
+	_CalcNewPagePos(PS, Forward = true) {
+		const X = (((Forward ? this._PDX : -this._PDX) - 1) / 2) * PS[0];
+		const Y = (((Forward ? this._PDY : -this._PDY) - 1) / 2) * PS[1];
 		return [X, Y];
 	}
-	_CalcEleOffsets(StartOffset = 0) {
-		let P;
-		const RawStart = StartOffset;
-		if (!StartOffset) {
-			// Initial page.
-			const S = this._ElementSizes[0];
-			P = {'X1': 0, 'Y1': 0, 'X2': S[0], 'Y2': S[1]};
-			this._ElementOffsets[0] = P;
-			StartOffset++;
-		} else
-			P = this._ElementOffsets[StartOffset - 1];
-
-		for (let i = StartOffset; i < this._ElementSizes.length; i++) {
-			const S = this._ElementSizes[i];
-			const BasePos = this._CalcPageBasePos(P);
-			const NewSize = this._CalcNewPagePos(S);
-			const NewX = BasePos[0] + NewSize[0];
-			const NewY = BasePos[1] + NewSize[1];
-			let NP = {'X1': NewX, 'Y1': NewY, 'X2': NewX + S[0], 'Y2': NewY + S[1]}
-			this._ElementOffsets[i] = NP;
-			P = NP;
-		}
-
+	_UpdateOffsetChain(PageNumber, Dir) {
+		// The first page is never be adjusted. Just used for its offset.
+		let P = this._ElementOffsets[PageNumber];
+		do {
+			PageNumber += Dir;
+			const S = this._ElementSizes[PageNumber];
+			if (!S)
+				break;
+			const BasePos = this._CalcPageBasePos(P, Dir > 0);
+			const NewPos = this._CalcNewPagePos(S, Dir > 0);
+			const NewX = BasePos[0] + NewPos[0];
+			const NewY = BasePos[1] + NewPos[1];
+			P = this._ElementOffsets[PageNumber] = {'X1': NewX, 'Y1': NewY, 'X2': NewX + S[0], 'Y2': NewY + S[1]};
+		} while (true);
+	}
+	_UpdateLoadedEle(SetPage = true) {
 		// Update any elements already loaded.
 		this._Loaded.forEach((Slot, Key) => {
+			if (!this._ElementOffsets[Key])
+				return;	// TODO: Cull.
 			const EleSize = this._ElementSizes[Key];
 			this._SetPageSizePos(Slot.Ele, EleSize, Key);
 		});
 
-		// If we're beyond the update offset, repositon focus.
-		if (this._P >= RawStart) {
-			console.log('Instant snapping to', this._P, 'due to earlier page', RawStart, 'reposition.');
+		// If we're on the focused page, update instantly.
+		if (SetPage) {
+			console.log('Instant snapping to', this._P);
 			const OldSpeed = HLCanvas.Speed;
 			HLCanvas.Speed = 0;
 			this.SetPage(this._P, this._VP, this._ExtraPages);
 			HLCanvas.Speed = OldSpeed;
 		}
 	}
+	// Main offset calculation. Called for elements without known offsets, or when a page has been resized.
+	_CalcPageOffset(PageNumber, Focus = this._P) {
+		const Diff = PageNumber - Focus;
+		const Dir = Diff < 0 ? -1 : (Diff > 0 ? 1 : Diff);
+		let Cleared = false;
+		if (!this._ElementOffsets[PageNumber - Dir]) {
+			// Caught when the user has requested a page unconnected to the known offsets.
+			// Clear all offsets and start a new element anew.
+			console.info('Clearing offsets as no neighbour for', PageNumber);
+			this._ElementOffsets = [];
+			this._ElementOffsets[PageNumber] = this._MakePageOffset(PageNumber);
+			Cleared = true;
+		}
 
+		if (!Cleared && Dir) {
+			this._UpdateOffsetChain(PageNumber - Dir, Dir);
+		} else {
+			// The current page size is updated. Update in both directions.
+			console.info('Offset update for base page', PageNumber);
+			const P = this._ElementOffsets[PageNumber];
+			P.X2 = P.X1 + this._ElementSizes[PageNumber][0];
+			P.Y2 = P.Y1 + this._ElementSizes[PageNumber][1];
+			this._UpdateOffsetChain(PageNumber, 1);
+			this._UpdateOffsetChain(PageNumber, -1);
+		}
+
+		this._UpdateLoadedEle(!Dir && !Cleared);
+
+		return;
+	}
 }
-

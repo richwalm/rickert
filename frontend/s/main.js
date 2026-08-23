@@ -18,7 +18,7 @@ function LoadComic(BasePath) {
 		La.SetPage(0);
 		globalThis.G = new GUI(La);
 	}).catch((Err) => {
-		GUI.SetMessage('Failed to load comic.');
+		console.error('Failed to load metadata:', Err);
 	});
 
 	globalThis.L = L;
