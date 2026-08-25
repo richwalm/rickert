@@ -73,7 +73,7 @@ export class HTTPLoader extends Loader {
 			if (Resp.status == 404) {
 				this._MaxDeadImage = Math.min(Number, this._MaxDeadImage);	// Use min in case multiple requests are occuring.
 				console.log('Reached 404 error at image', Number);
-				// TODO: Send a message back to the layout so any extra elements can be deleted.
+				this._SetLayoutEnd(Number);
 			} else
 				throw new Error(`Got ${Resp.status} from fetch() when image ${Number} failed decoding.`);
 		}).catch((Err => {

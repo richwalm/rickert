@@ -5,6 +5,7 @@ import { HLCanvas } from './canvas.js';
 export class Layout {
 	constructor(Loader, X = 0, Y = 0) {
 		this._Loader = Loader;
+		Loader.Layout = this;
 		this._P = -1; // Current page.
 		this._VP = null; // Current viewpoint.
 		this._ExtraPages = 0;	// For multiple page mode.
@@ -179,6 +180,24 @@ export class Layout {
 		HLCanvas.SetFocus(X, Y, X + W, Y + H, FX, FY);
 	}
 
+	CullPage(PageNumber) {
+		const Page = this._Loaded.get(PageNumber);
+		if (!Page)
+			return false;
+		Page.Ele.remove();
+		this._Loader.UnloadImage(PageNumber);
+		this._Loaded.delete(PageNumber);
+		console.log('Culled page', PageNumber);
+		return true;
+	}
+	set End(EndPageNumber) {
+		if (this._Loader.IsStreaming)	// Cut off pages further than the focus.
+			EndPageNumber = Math.max(this._P + 1, EndPageNumber);
+		for (const [Key] of this._Loaded) {
+			if (Key >= EndPageNumber)
+				this.CullPage(Key);
+		}
+	}
 	_CullLoadedPages() {
 		let ToRemove = this._Loaded.size - (this._MaxLoaded - 1); // -1 for the upcoming page slot.
 		if (ToRemove <= 0)
@@ -188,12 +207,7 @@ export class Layout {
 			// Avoid removing pages around the current page.
 			if (this.IsPageVisible(Key, this._SafeNeighhours))
 				continue;
-
-			const Page = this._Loaded.get(Key);
-			Page.Ele.remove();
-			this._Loader.UnloadImage(Key);
-			this._Loaded.delete(Key);
-			console.log('Culled page', Key);
+			this.CullPage(Key);
 			if (--ToRemove <= 0)
 				break;
 		}
@@ -346,8 +360,12 @@ export class Layout {
 				return;
 		}
 
-		if (!this._MoveByViewpoint)
-			return this.SetPage(this._P + ((this._ExtraPages + 1) * Direction), null, this._ExtraPages);
+		if (!this._MoveByViewpoint) {
+			let PageNumber = this._P + (this._ExtraPages + 1) * Direction;
+			if (Direction < 0)
+				PageNumber = Math.min(PageNumber, this._Loader.MaxValidImages - 1);
+			return this.SetPage(PageNumber, null, this._ExtraPages);
+		}
 
 		// Move by viewpoint.
 		const Viewpoints = this._Viewpoints[this._P];
@@ -371,6 +389,8 @@ export class Layout {
 		}
 
 		let NewPage = this._P + Direction;
+		if (Direction < 0)
+			NewPage = Math.min(NewPage, this._Loader.MaxValidImages - 1);
 		let NewVP = GetFirstOrLastViewpoint(this._Viewpoints[NewPage], Direction);
 		return this.SetPage(NewPage, NewVP, 0);
 	}

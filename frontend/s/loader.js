@@ -6,6 +6,7 @@ export class Loader {
 		this._ImageSizes = [];
 		this._MaxDeadImage = Infinity;
 		this._Loaded = new Map();
+		this._Layout = null;
 		if (Meta)
 			this._ReadMeta(Meta);
 	}
@@ -18,12 +19,17 @@ export class Loader {
 		}
 	}
 
+	get MaxValidImages() {
+		return this._ImageSizes.length;
+	}
 	get MaxImages() {
 		return this._MaxDeadImage;
 	}
 	get IsStreaming() {
 		return (this._ImageSizes.length < this._MaxDeadImage);
 	}
+
+	set Layout(Value) { this._Layout = Value; }
 
 	_CheckCache(Number) {
 		const Loaded = this._Loaded.get(Number);
@@ -53,5 +59,11 @@ export class Loader {
 		});
 		const Mid = Math.floor(Images.length / 2);
 		return Images[Mid];
+	}
+
+	_SetLayoutEnd(EndPageNumber) {
+		if (!this._Layout)
+			return;
+		this._Layout.End = EndPageNumber;
 	}
 }
