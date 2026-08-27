@@ -13,8 +13,8 @@ export class Layout {
 		this._X = X; this._Y = Y; // Canvas offset.
 		this._ElementOffsets = []; // Canvas location for each element (X1, Y1, X2, Y2). Doesn't include the above offset.
 		this._ElementSizes = []; // Size (W, H) of each element.
-		// FIXME: For the below to work with ResizeObserver, need to pass to the loader.
-		this._FW = this._FH = null; // Force elements to this size.
+		this._DefaultForceSize = 256;	// Default force size. Found mobile devices work a lot better for scrolling on smaller sizes.
+		this._FW = null; this._FH = this._DefaultForceSize; // Force elements to this size.
 		this._PDX = 1; this._PDY = 0; // Direction to add elements to the canvas.
 		this._Padding = 0; // Padding between elements.
 
@@ -49,10 +49,14 @@ export class Layout {
 					case 'Down':
 						this._PDX = 0;
 						this._PDY = 1;
+						this._FH = null;
+						this._FW = this._DefaultForceSize;
 						break;
 					case 'Up':	// Is one this even a thing?
 						this._PDX = 0;
 						this._PDY = -1;
+						this._FH = null;
+						this._FW = this._DefaultForceSize;
 					default:
 						break;
 				}
@@ -197,6 +201,8 @@ export class Layout {
 			if (Key >= EndPageNumber)
 				this.CullPage(Key);
 		}
+		this._ElementOffsets.length = EndPageNumber;
+		this._ElementSizes.length = EndPageNumber;
 	}
 	_CullLoadedPages() {
 		let ToRemove = this._Loaded.size - (this._MaxLoaded - 1); // -1 for the upcoming page slot.
@@ -257,8 +263,13 @@ export class Layout {
 		// Append img to element.
 		if (Data.Img) {
 			const Slot = this._Loaded.get(PageNumber);
-			if (Slot.Ele)
+			if (Slot.Ele) {
+				if (this._FW)
+					Data.Img.style.width = this._FW + 'px';
+				if (this._FH)
+					Data.Img.style.height = this._FH + 'px';
 				Slot.Ele.appendChild(Data.Img);
+			}
 		}
 	}
 
@@ -353,7 +364,7 @@ export class Layout {
 
 		this._VP = ViewpointNumber;
 		const MinPage = Math.max(0, PageNumber);
-		const MaxPage = Math.min(this._Loader.MaxImages, PageNumber + ExtraPages);
+		const MaxPage = Math.min(this._Loader.MaxImages - 1, PageNumber + ExtraPages);
 		const ValidExtraPages = MaxPage - MinPage;
 		this._SetFocus(MinPage, ViewpointNumber, ValidExtraPages);
 		return true;
