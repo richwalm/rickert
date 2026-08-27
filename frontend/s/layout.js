@@ -13,6 +13,7 @@ export class Layout {
 		this._X = X; this._Y = Y; // Canvas offset.
 		this._ElementOffsets = []; // Canvas location for each element (X1, Y1, X2, Y2). Doesn't include the above offset.
 		this._ElementSizes = []; // Size (W, H) of each element.
+		// FIXME: For the below to work with ResizeObserver, need to pass to the loader.
 		this._FW = this._FH = null; // Force elements to this size.
 		this._PDX = 1; this._PDY = 0; // Direction to add elements to the canvas.
 		this._Padding = 0; // Padding between elements.
@@ -191,8 +192,7 @@ export class Layout {
 		return true;
 	}
 	set End(EndPageNumber) {
-		if (this._Loader.IsStreaming)	// Cut off pages further than the focus.
-			EndPageNumber = Math.max(this._P + 1, EndPageNumber);
+		EndPageNumber = Math.max(this._P + 1, EndPageNumber);
 		for (const [Key] of this._Loaded) {
 			if (Key >= EndPageNumber)
 				this.CullPage(Key);
@@ -216,7 +216,7 @@ export class Layout {
 	_AddVPEles(Ele, Viewpoints) {
 		const Amount = Viewpoints.length;
 		let Count = 0;
-		Viewpoints.forEach((VP) => {
+		for (const VP of Viewpoints) {
 			const VPEle = document.createElement('div');
 			VPEle.classList.add('vp');
 			VPEle.style.left = (VP.X * 100) + '%';
@@ -226,7 +226,7 @@ export class Layout {
 			VPEle.style.boxShadow = 'inset 0 0 100px Red';
 			VPEle.textContent = Count++;
 			Ele.appendChild(VPEle);
-		});
+		};
 	}
 
 	_MakePageSize(PageNumber) {
@@ -240,6 +240,26 @@ export class Layout {
 		Ele.style.height = EleSize[1] + 'px';
 		const EleOffset = this._ElementOffsets[PageNumber];
 		Ele.style.transform = `translate(${EleOffset.X1 + this._X}px, ${EleOffset.Y1 + this._Y}px)`;
+	}
+
+	_SetPageInfo(PageNumber, Data) {
+		// New image size.
+		if (Data.Size) {
+			const EleSize = this._ElementSizes[PageNumber];
+			const NewEleSize = this._CalcEleSize(Data.Size);
+			// Check if there's a change to the element size.
+			if (!EleSize || EleSize[0] != NewEleSize[0] || EleSize[1] != NewEleSize[1]) {
+				console.log('Loaded image for page', PageNumber, 'has a different element size. Recalculating offsets.')
+				this._ElementSizes[PageNumber] = NewEleSize;
+				this._CalcPageOffset(PageNumber);
+			}
+		}
+		// Append img to element.
+		if (Data.Img) {
+			const Slot = this._Loaded.get(PageNumber);
+			if (Slot.Ele)
+				Slot.Ele.appendChild(Data.Img);
+		}
 	}
 
 	// Load a page.
@@ -277,22 +297,11 @@ export class Layout {
 
 		// Download image in the loading zone.
 		this._Loader.LoadImage(PageNumber).then((Img) => {
-			const ImgSize = this._Loader.GetImageSize(PageNumber);
-			const NewEleSize = this._CalcEleSize(ImgSize);
-			// Element size changed.
-			if (EleSize[0] != NewEleSize[0] || EleSize[1] != NewEleSize[1]) {
-				console.log('Loaded image for page', PageNumber, 'has a different element size. Recalculating offsets.')
-				this._ElementSizes[PageNumber] = NewEleSize;
-				this._CalcPageOffset(PageNumber);
-			}
-
 			if (!Ele.isConnected) {
 				this._Loader.UnloadImage(PageNumber);
 				console.warn('Loaded image', PageNumber, 'but page has been removed!');
 				return;
 			}
-			Slot['Image'] = Img;
-			Ele.appendChild(Img);
 			Ele.style.backgroundColor = 'White';
 			console.log('Finished loading page', PageNumber);
 		}).catch((Err) => {
@@ -441,8 +450,10 @@ export class Layout {
 	_UpdateLoadedEle(SetPage = true) {
 		// Update any elements already loaded.
 		this._Loaded.forEach((Slot, Key) => {
-			if (!this._ElementOffsets[Key])
-				return;	// TODO: Cull.
+			if (!this._ElementOffsets[Key]) {
+				this.CullPage(Key);
+				return;
+			}
 			const EleSize = this._ElementSizes[Key];
 			this._SetPageSizePos(Slot.Ele, EleSize, Key);
 		});

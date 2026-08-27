@@ -61,9 +61,15 @@ export class Loader {
 		return Images[Mid];
 	}
 
-	_SetLayoutEnd(EndPageNumber) {
+	// Communication with the layout.
+	_SetLayoutEnd(EndImageNumber) {
 		if (!this._Layout)
 			return;
-		this._Layout.End = EndPageNumber;
+		this._Layout.End = EndImageNumber;
+	}
+	_SetPage(ImageNumber, Data) {
+		if (!this._Layout)
+			return;
+		this._Layout._SetPageInfo(ImageNumber, Data);
 	}
 }

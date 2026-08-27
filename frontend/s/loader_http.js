@@ -7,6 +7,22 @@ export class HTTPLoader extends Loader {
 		return this._BasePath + (Number + 1) + this._Extension;
 	}
 
+	_AlertSize(Number, Img) {
+		const NewSize = [Img.naturalWidth, Img.naturalHeight];
+		if (!NewSize[0] || !NewSize[1])	// May trigger on initial render.
+			return;
+
+		const CurrentSize = this._ImageSizes[Number];
+
+		if (CurrentSize && CurrentSize[0] == NewSize[0] && CurrentSize[1] == NewSize[1])
+			return;	// No change.
+
+		console.log('Image', Number, 'has new size;', NewSize);
+		this._ImageSizes[Number] = NewSize;
+		this._SetPage(Number, {'Size': NewSize});
+		return;
+	}
+
 	constructor(BasePath = '', Extension) {
 		super();
 
@@ -15,6 +31,24 @@ export class HTTPLoader extends Loader {
 
 		this._BasePath = BasePath;
 		this._Extension = Extension;
+		this._Observed = new Map();
+
+		this._RO = new ResizeObserver((Entries) => {
+			for (const ROEntry of Entries) {
+				const Ele = ROEntry.target;
+				const Number = this._Observed.get(Ele);
+				this._AlertSize(Number, Ele);
+			}
+		});
+	}
+
+	UnloadImage(Number) {
+		const Loaded = this._Loaded.get(Number);
+		if (!Loaded)	// Could be hit if we're on a very slow connection.
+			return;
+		this._RO.unobserve(Loaded);
+		this._Observed.delete(Loaded);
+		super.UnloadImage(Number);
 	}
 
 	async LoadMeta() {
@@ -50,11 +84,15 @@ export class HTTPLoader extends Loader {
 
 		// Otherwise, actually load.
 		const Img = new Image();
+		this._Loaded.set(Number, Img);
 		const URL = this.GetImageFilename(Number);
+		this._SetPage(Number, {'Img': Img});	// Give it the layout to add to the page.
+		// Add to resize observer.
+		this._Observed.set(Img, Number);
+		this._RO.observe(Img);
 		Img.src = URL;
+
 		return Img.decode().then(() => {
-			this._ImageSizes[Number] = [Img.width, Img.height];
-			this._Loaded.set(Number, Img);
 			console.log('Loaded image', Number);
 			return Img;
 		}).catch((Err) => {
