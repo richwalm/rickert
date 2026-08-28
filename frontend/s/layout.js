@@ -269,6 +269,7 @@ export class Layout {
 				if (this._FH)
 					Data.Img.style.height = this._FH + 'px';
 				Slot.Ele.appendChild(Data.Img);
+				Slot['Img'] = Data.Img;
 			}
 		}
 	}
@@ -316,6 +317,8 @@ export class Layout {
 			Ele.style.backgroundColor = 'White';
 			console.log('Finished loading page', PageNumber);
 		}).catch((Err) => {
+			if (Slot.Img)
+				Slot.Img.remove();
 			Ele.style.backgroundColor = 'Red'; // TODO: Better error.
 			console.error('Failed to load page', PageNumber, ':', Err);
 		});
