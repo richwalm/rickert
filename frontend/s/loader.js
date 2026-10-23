@@ -7,6 +7,7 @@ export class Loader {
 		this._MaxDeadImage = Infinity;
 		this._Loaded = new Map();
 		this._Layout = null;
+		this._MetaFilename = 'meta.json';
 		if (Meta)
 			this._ReadMeta(Meta);
 	}
@@ -16,6 +17,7 @@ export class Loader {
 		if (Meta && Meta.ImageSizes) {
 			this._ImageSizes = Meta.ImageSizes;
 			this._MaxDeadImage = Meta.ImageSizes.length;
+			this._SetLayoutEnd(Meta.ImageSizes.length);
 		}
 	}
 
@@ -40,6 +42,14 @@ export class Loader {
 
 	_OutsideRange(Number) {
 		return (Number < 0 || Number >= this._MaxDeadImage);
+	}
+
+	_CommonLoadCheck(Number) {
+		// Range check.
+		if (this._OutsideRange(Number))
+			throw new Error(`Requested out of range image ${Number}.`)
+		// Return if already loaded.
+		return this._CheckCache(Number);
 	}
 
 	UnloadImage(Number) {

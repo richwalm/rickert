@@ -40,7 +40,7 @@ export class Layout {
 	async ReadMeta() {
 		const Meta = await this._Loader.LoadMeta();
 		if (!Meta)
-			return;
+			return Meta;	// Returns false when we can't continue.
 
 		if (Meta.ImageSizes) {
 			if (Meta.Direction) {
@@ -375,6 +375,14 @@ export class Layout {
 		return true;
 	}
 
+	_GetNewPage(Direction) {
+		let NewNumber = this._P + (this._ExtraPages + 1) * Direction;
+		// In case the user has moved too far forward in streaming mode, jump back to the last valid image.
+		if (Direction < 0 && this._Loader.MaxValidImages)
+			NewNumber = Math.min(NewNumber, this._Loader.MaxValidImages - 1);
+		return NewNumber;
+	}
+
 	// Move forward or back by pages or viewpoints.
 	Move(Direction) {
 		switch (Direction) {
@@ -386,9 +394,7 @@ export class Layout {
 		}
 
 		if (!this._MoveByViewpoint) {
-			let PageNumber = this._P + (this._ExtraPages + 1) * Direction;
-			if (Direction < 0)
-				PageNumber = Math.min(PageNumber, this._Loader.MaxValidImages - 1);
+			let PageNumber = this._GetNewPage(Direction);
 			return this.SetPage(PageNumber, null, this._ExtraPages);
 		}
 
@@ -413,9 +419,7 @@ export class Layout {
 			return (Direction > 0 ? 0 : Viewpoints.length - 1);
 		}
 
-		let NewPage = this._P + Direction;
-		if (Direction < 0)
-			NewPage = Math.min(NewPage, this._Loader.MaxValidImages - 1);
+		let NewPage = this._GetNewPage(Direction);
 		let NewVP = GetFirstOrLastViewpoint(this._Viewpoints[NewPage], Direction);
 		return this.SetPage(NewPage, NewVP, 0);
 	}

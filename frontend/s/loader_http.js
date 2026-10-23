@@ -51,12 +51,7 @@ export class HTTPLoader extends Loader {
 		super.UnloadImage(Number);
 	}
 
-	async LoadMeta() {
-		// Return a copy if we already have it.
-		if (this._Meta)
-			return await this._Meta;
-
-		const URL = this._BasePath + 'meta.json';
+	static async DownloadMeta(URL) {
 		return fetch(URL).then((Resp) => {
 			if (!Resp.ok) {
 				if (Resp.status == 404)
@@ -65,20 +60,26 @@ export class HTTPLoader extends Loader {
 			}
 			return Resp.json();
 		}).then((JSON) => {
-			this._ReadMeta(JSON);
 			return JSON;
 		}).catch((Err) => {
 			console.error('Failed to load comic meta:', Err);
 		});
 	}
 
-	async LoadImage(Number) {
-		// Range check.
-		if (this._OutsideRange(Number))
-			throw new Error(`Requested out of range image ${Number}.`)
+	async LoadMeta() {
+		// Return a copy if we already have it.
+		if (this._Meta)
+			return await this._Meta;
 
-		// Return if already loaded.
-		const Loaded = this._CheckCache(Number);
+		const URL = this._BasePath + this._MetaFilename;
+		const JSON = await this.constructor.DownloadMeta(URL);
+		if (JSON)
+			this._ReadMeta(JSON);
+		return JSON;
+	}
+
+	async LoadImage(Number) {
+		const Loaded = this._CommonLoadCheck(Number);
 		if (Loaded)
 			return await Loaded;
 
