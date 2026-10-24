@@ -2,6 +2,21 @@
 
 import { Loader } from './loader.js';
 
+export async function DownloadMeta(URL) {
+	return fetch(URL).then((Resp) => {
+		if (!Resp.ok) {
+			if (Resp.status == 404)
+				return;
+			throw new Error(`Bad status code: ${Resp.status}`);
+		}
+		return Resp.json();
+	}).then((JSON) => {
+		return JSON;
+	}).catch((Err) => {
+		console.error('Failed to load comic meta:', Err);
+	});
+}
+
 export class HTTPLoader extends Loader {
 	GetImageFilename(Number) {
 		return this._BasePath + (Number + 1) + this._Extension;
@@ -51,28 +66,13 @@ export class HTTPLoader extends Loader {
 		super.UnloadImage(Number);
 	}
 
-	static async DownloadMeta(URL) {
-		return fetch(URL).then((Resp) => {
-			if (!Resp.ok) {
-				if (Resp.status == 404)
-					return;
-				throw new Error(`Bad status code: ${Resp.status}`);
-			}
-			return Resp.json();
-		}).then((JSON) => {
-			return JSON;
-		}).catch((Err) => {
-			console.error('Failed to load comic meta:', Err);
-		});
-	}
-
 	async LoadMeta() {
 		// Return a copy if we already have it.
 		if (this._Meta)
 			return await this._Meta;
 
 		const URL = this._BasePath + this._MetaFilename;
-		const JSON = await this.constructor.DownloadMeta(URL);
+		const JSON = await DownloadMeta(URL);
 		if (JSON)
 			this._ReadMeta(JSON);
 		return JSON;

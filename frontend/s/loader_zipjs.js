@@ -2,6 +2,7 @@
 
 import { GetExtension } from './common.js';
 import { Loader } from './loader.js';
+import { DownloadMeta } from './loader_http.js';
 import {
 	BlobReader,
 	HttpRangeReader,
@@ -83,7 +84,13 @@ export class ZIPJSLoader extends Loader {
 		}
 
 		if (this._Input) {
-			// TODO: Otherwise, if we have the path, also try load meta from the same directory.
+			const Extension = GetExtension(this._Input);
+			const Path = this._Input.slice(0, -Extension.length) + 'json';
+			const JSONObj = await DownloadMeta(Path);
+			if (JSONObj) {
+				this._ReadMeta(JSONObj);
+				return JSONObj;
+			}
 		}
 
 		return;
