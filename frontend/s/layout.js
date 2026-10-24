@@ -13,10 +13,7 @@ export class Layout {
 		this._X = X; this._Y = Y; // Canvas offset.
 		this._ElementOffsets = []; // Canvas location for each element (X1, Y1, X2, Y2). Doesn't include the above offset.
 		this._ElementSizes = []; // Size (W, H) of each element.
-		// Below has quite an effect to performance, especially on mobile devices.
-		// When too small, the browser may shrink it down when scrolling, causing noticeable blurring.
-		// When too large, can be jittery and very flickery on mobile devices.
-		this._FW = null; this._FH = screen.height; // Force elements to this size.
+		this._FW = null; this._FH = this.constructor.MaxScreenDimension; // Force elements to this size.
 		this._PDX = 1; this._PDY = 0; // Direction to add elements to the canvas.
 		this._Padding = 0; // Padding between elements.
 
@@ -37,6 +34,14 @@ export class Layout {
 		this._Viewpoints = [];
 	}
 
+	static get MaxScreenDimension() {
+		// This has quite an effect on performance, especially on mobile devices.
+		// When too small, the browser may shrink images down when scrolling, causing noticeable blurring.
+		// When too large, can be jittery and very flickery on mobile devices.
+		// As mobile devices can be flipped, we'll use the largest of the two.
+		return Math.max(screen.width, screen.height);
+	}
+
 	async ReadMeta() {
 		const Meta = await this._Loader.LoadMeta();
 		if (!Meta)
@@ -52,13 +57,13 @@ export class Layout {
 						this._PDX = 0;
 						this._PDY = 1;
 						this._FH = null;
-						this._FW = screen.width;
+						this._FW = this.constructor.MaxScreenDimension;
 						break;
 					case 'Up':	// Is one this even a thing?
 						this._PDX = 0;
 						this._PDY = -1;
 						this._FH = null;
-						this._FW = screen.width;
+						this._FW = this.constructor.MaxScreenDimension;
 					default:
 						break;
 				}
