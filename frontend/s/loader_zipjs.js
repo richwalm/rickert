@@ -10,6 +10,8 @@ import {
 	BlobWriter
 } from './dist/zip-custom.js';
 
+const ImageExtensions = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'jxl': 'image/jxl', 'avif': 'image/avif', 'avifs': 'image/avif-sequence', 'webp': 'image/webp'};
+
 export class ZIPJSLoader extends Loader {
 	constructor(Input) {
 		super();
@@ -32,7 +34,6 @@ export class ZIPJSLoader extends Loader {
 		if (this._Meta)
 			return await this._Meta;
 
-		const ImageExtensions = ['jpg', 'jpeg', 'png', 'jxl', 'avif', 'avifs', 'webm', 'webp'];
 		let MetaEntry = null;
 
 		const ImageCount = await this._Z.getEntries().then((Enteries) => {
@@ -43,7 +44,7 @@ export class ZIPJSLoader extends Loader {
 				if (Ent.directory) continue;
 
 				const Ext = GetExtension(Ent.filename).toLowerCase();
-				if (ImageExtensions.indexOf(Ext) >= 0) {
+				if (Ext in ImageExtensions) {
 					ImageFilenames.push(Ent.filename);
 					Entries.set(Ent.filename, Ent);
 				}
@@ -97,8 +98,10 @@ export class ZIPJSLoader extends Loader {
 		this._Loaded.set(Number, Img);
 		this._SetPage(Number, {'Img': Img});
 
-		const Entry = this._Entries[Number];
-		const BlobData = await Entry.getData(new BlobWriter());
+		const Ent = this._Entries[Number];
+		// zip-js has a MIME type obtainer, but might not be compiled in so we'll use our own.
+		const MIMEType = ImageExtensions[GetExtension(Ent.filename)];
+		const BlobData = await Ent.getData(new BlobWriter(MIMEType));
 		if (!BlobData) {
 			console.error('Failed to obtain blob.');
 			return;
