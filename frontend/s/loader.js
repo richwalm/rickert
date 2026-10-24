@@ -80,6 +80,8 @@ export class Loader {
 	_SetPage(ImageNumber, Data) {
 		if (!this._Layout)
 			return;
+		if (Data.Size)
+			this._ImageSizes[ImageNumber] = Data.Size;
 		this._Layout._SetPageInfo(ImageNumber, Data);
 	}
 }

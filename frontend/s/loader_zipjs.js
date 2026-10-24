@@ -118,7 +118,8 @@ export class ZIPJSLoader extends Loader {
 
 		return Img.decode().then(() => {
 			console.log('Loaded image', Number);
-			this._SetPage(Number, {'Size': [Img.naturalWidth, Img.naturalHeight]});
+			const Size = [Img.naturalWidth, Img.naturalHeight];
+			this._SetPage(Number, {'Size': Size});
 			return Img;
 		}).catch((Err) => {
 			console.error('Failed to load image', Number, ':', Err);

@@ -33,7 +33,6 @@ export class HTTPLoader extends Loader {
 			return;	// No change.
 
 		console.log('Image', Number, 'has new size;', NewSize);
-		this._ImageSizes[Number] = NewSize;
 		this._SetPage(Number, {'Size': NewSize});
 		return;
 	}
