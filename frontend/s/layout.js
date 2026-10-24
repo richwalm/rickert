@@ -281,6 +281,20 @@ export class Layout {
 		}
 	}
 
+	SetBGNote(Parent, Msg) {
+		let Note = Parent.getElementsByClassName('bgnote');
+		if (!Note.length && Msg) {
+			Note = document.createElement('div');
+			Note.classList.add('bgnote');
+			Parent.appendChild(Note);
+		} else if (!Msg) {
+			Note[0].remove();
+			return
+		} else
+			Note = Note[0];
+		Note.textContent = Msg;
+	}
+
 	// Load a page.
 	LoadPage(PageNumber) {
 		if (this._Loaded.has(PageNumber)) // Already loaded.
@@ -299,7 +313,8 @@ export class Layout {
 		Slot['Ele'] = Ele;
 		Ele.classList.add('p');
 		this._SetPageSizePos(Ele, EleSize, PageNumber);
-		Ele.style.backgroundColor = (PageNumber & 1 ? 'Gray' : 'Silver'); // TODO: Use a loading graphic.
+		Ele.classList.add('loading');
+		this.SetBGNote(Ele, 'Loading');
 		if (this._HideNonFocusPages)
 			Ele.style.opacity = 0;
 		HLCanvas.Canvas.appendChild(Ele);
@@ -321,13 +336,17 @@ export class Layout {
 				console.warn('Loaded image', PageNumber, 'but page has been removed!');
 				return;
 			}
-			Ele.style.backgroundColor = 'White';
+			Ele.classList.add('loaded');
+			this.SetBGNote(Ele, null);
 			console.log('Finished loading page', PageNumber);
 		}).catch((Err) => {
 			if (Slot.Img)
 				Slot.Img.remove();
-			Ele.style.backgroundColor = 'Red'; // TODO: Better error.
+			Ele.classList.add('error');
+			this.SetBGNote(Ele, 'Error');
 			console.error('Failed to load page', PageNumber, ':', Err);
+		}).finally(() => {
+			Ele.classList.remove('loading');
 		});
 	}
 

@@ -19,6 +19,41 @@ body {
 .p, #scrollarea, #canvas, .vp {
 	position: absolute;
 }
+.p, .vp {
+	overflow: hidden;
+}
+
+.loaded {
+	color: black;
+	background: white;
+}
+/* Loading animation. */
+.loading {
+	background: linear-gradient(#0008, #fff8, #0008);
+	animation: Loading 3s linear infinite;
+	background-size: 100% 200%;
+	color: white;
+}
+@keyframes Loading {
+	0% {background-position: 50% 200%}
+	100% {background-position: 50% 0%}
+}
+/* Error */
+.error {
+	background: radial-gradient(#f998, #f338);
+	color: pink;
+}
+/* Background note. */
+.bgnote {
+	position: relative;
+	float: left;
+	left: 50%;
+	top: 100%;
+	transform: translate(-50%, -100%);
+	font: 4em sans-serif;
+	font-variant: small-caps;
+	user-select: none;
+}
 
 /* Middle message */
 #msg {
@@ -56,7 +91,7 @@ td { background: #000; padding: 0; }
 .p { transition: opacity 500ms; }
 
 /* Viewpoints */
-.vp { box-shadow: red 0 0 100px inset; font-size: 5em; color: red; overflow: hidden; font-family: monospace; text-shadow: 0 0 10px white; user-select: none; }
+.vp { box-shadow: red 0 0 100px inset; font-size: 5em; color: red; font-family: monospace; text-shadow: 0 0 10px white; user-select: none; }
 
 /* GUI */
 #left, #right {
