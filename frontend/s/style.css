@@ -45,7 +45,7 @@ body {
 }
 /* Background note. */
 .bgnote {
-	position: relative;
+	position: absolute;
 	float: left;
 	left: 50%;
 	top: 100%;
@@ -53,6 +53,7 @@ body {
 	font: 4em sans-serif;
 	font-variant: small-caps;
 	user-select: none;
+	z-index: -1;
 }
 
 /* Middle message */

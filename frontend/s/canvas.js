@@ -3,16 +3,16 @@
 // Low-level canvas handler. Positions are based on the upper-left pixel.
 const LLCanvas = new class {
 	get Speed() { return this._Speed; }
-	set Speed(Var) { this._C.style.transitionDuration = (this._Speed = Var) + 's'; }
+	set Speed(Var) { this._Speed = Var; }
 
 	_SetCanvas(NewX, NewY, NewZoom) {
+		this._C.style.transitionDuration = (this._Speed + 's');
 		let TransformString = `translate(${-NewX * NewZoom}px, ${-NewY * NewZoom}px) scale(${NewZoom})`;
 		this._C.style.transform = TransformString;
 
 		this._X = NewX;
 		this._Y = NewY;
 		this._Zoom = NewZoom;
-		this.Speed = 0.5;
 	}
 
 	get Width() { return this._C.offsetWidth; }
@@ -38,6 +38,7 @@ const LLCanvas = new class {
 		// Elements
 		this._FS = document.getElementById('fakescroll');
 		this._C = document.getElementById('canvas');
+		this.Speed = 0.5;
 
 		this._UR = this._UpdateRegion.bind(this);
 		addEventListener('resize', this._UR);
@@ -110,7 +111,7 @@ const LLCanvas = new class {
 // Shades part of the page we're not looking at.
 const Shade = new class {
 	get Speed() { return this._Speed; }
-	set Speed(Var) { this._SH.style.transitionDuration = (this._Speed = Var) + 's'; }
+	set Speed(Var) { this._Speed = Var; }
 
 	constructor() {
 		this._S = document.getElementById('shade');
@@ -121,9 +122,9 @@ const Shade = new class {
 	}
 
 	SetSize(Width, Height, Left, Top) {
+		this._SH.style.transitionDuration = this._Speed + 's';
 		this._SH.style.width = (Width + this._O) + 'px';
 		this._SH.style.height = (Height + this._O) + 'px';
-		this._SH.style.transitionDuration = this._Speed + 's';
 		this._S.style.left = ((Left ? Left : 0) + -this._O) + 'px';
 		this._S.style.top = ((Top ? Top : 0) + -this._O) + 'px';
 		this._S.style.opacity = this._Opacity;
