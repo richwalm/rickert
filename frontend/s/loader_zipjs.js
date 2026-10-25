@@ -117,7 +117,6 @@ export class ZIPJSLoader extends Loader {
 		Img.src = URL.createObjectURL(BlobData);
 
 		return Img.decode().then(() => {
-			console.log('Loaded image', Number);
 			const Size = [Img.naturalWidth, Img.naturalHeight];
 			this._SetPage(Number, {'Size': Size});
 			return Img;

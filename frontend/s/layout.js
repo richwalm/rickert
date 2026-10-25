@@ -199,7 +199,6 @@ export class Layout {
 		Page.Ele.remove();
 		this._Loader.UnloadImage(PageNumber);
 		this._Loaded.delete(PageNumber);
-		console.log('Culled page', PageNumber);
 		return true;
 	}
 	set End(EndPageNumber) {
@@ -327,7 +326,6 @@ export class Layout {
 		}
 
 		this._Loaded.set(PageNumber, Slot);
-		console.log('Loading page', PageNumber);
 
 		// Download image in the loading zone.
 		this._Loader.LoadImage(PageNumber).then((Img) => {
@@ -338,7 +336,6 @@ export class Layout {
 			}
 			Ele.classList.add('loaded');
 			this.SetBGNote(Ele, null);
-			console.log('Finished loading page', PageNumber);
 		}).catch((Err) => {
 			if (Slot.Img)
 				Slot.Img.remove();

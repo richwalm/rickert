@@ -93,7 +93,6 @@ export class HTTPLoader extends Loader {
 		Img.src = URL;
 
 		return Img.decode().then(() => {
-			console.log('Loaded image', Number);
 			return Img;
 		}).catch((Err) => {
 			console.error('Failed to load image', Number, ':', Err);
