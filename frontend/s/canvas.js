@@ -38,7 +38,7 @@ const LLCanvas = new class {
 		// Elements
 		this._FS = document.getElementById('fakescroll');
 		this._C = document.getElementById('canvas');
-		this.Speed = 0.5;
+		this.Speed = 0;
 
 		this._UR = this._UpdateRegion.bind(this);
 		addEventListener('resize', this._UR);
@@ -117,12 +117,12 @@ const Shade = new class {
 		this._S = document.getElementById('shade');
 		this._SH = document.getElementById('shadehole');
 		this._O = 10;
-		this.Speed = 0.5;
+		this.Speed = 0;
 		this._Opacity = 0.8;
 	}
 
 	SetSize(Width, Height, Left, Top) {
-		this._SH.style.transitionDuration = this._Speed + 's';
+		this._SH.style.transitionDuration = this._S.style.transitionDuration = (this._Speed + 's');
 		this._SH.style.width = (Width + this._O) + 'px';
 		this._SH.style.height = (Height + this._O) + 'px';
 		this._S.style.left = ((Left ? Left : 0) + -this._O) + 'px';

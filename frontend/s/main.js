@@ -31,6 +31,8 @@ function LoadComic(Name) {
 		GUI.SetMessage(false);
 
 		La.SetPage(0);
+		document.getElementById('canvas').style.display = 'block';
+		La.Speed = .5;
 	}).catch((Err) => {
 		console.error('Failed to load comic:', Err);
 		GUI.SetMessage('Failed to load comic.');

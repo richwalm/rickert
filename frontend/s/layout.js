@@ -32,6 +32,9 @@ export class Layout {
 
 		// Panels.
 		this._Viewpoints = [];
+
+		// Speed.
+		this.Speed = 0;
 	}
 
 	static get MaxScreenDimension() {
@@ -316,6 +319,7 @@ export class Layout {
 		this.SetBGNote(Ele, 'Loading');
 		if (this._HideNonFocusPages)
 			Ele.style.opacity = 0;
+		Ele.style.transitionDuration = (this._Speed + 's');
 		HLCanvas.Canvas.appendChild(Ele);
 
 		// Add panel viewpoints.
@@ -502,7 +506,7 @@ export class Layout {
 		// If we're on the focused page, update instantly.
 		if (SetPage) {
 			console.log('Instant snapping to', this._P);
-			const OldSpeed = HLCanvas.Speed;
+			const OldSpeed = HLCanvas.Speed;	// Don't change our own speed, so pages aren't adjusted.
 			HLCanvas.Speed = 0;
 			this.SetPage(this._P, this._VP, this._ExtraPages);
 			HLCanvas.Speed = OldSpeed;
@@ -537,5 +541,14 @@ export class Layout {
 		this._UpdateLoadedEle(!Dir && !Cleared);
 
 		return;
+	}
+
+	get Speed() { return this._Speed; }
+	set Speed(Var) {
+		this._Speed = HLCanvas.Speed = Var;
+		const SpeedString = (Var + 's');
+		this._Loaded.forEach((Slot, Key) => {
+			Slot.Ele.style.transitionDuration = SpeedString;
+		});
 	}
 }
