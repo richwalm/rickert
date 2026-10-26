@@ -3,6 +3,8 @@
 export class GUI {
 	constructor(C) {
 		this._C = C;
+		this._DefaultSpeed = C.Speed;
+		this._InstantMode = false;
 		this._PanelMode = false;
 		if (this._C.HasViewpoints)
 			this.SwitchMode(true);
@@ -73,6 +75,12 @@ export class GUI {
 				break;
 			case 'KeyF':
 				this._C.FillMode = !this._C.FillMode;
+				e.preventDefault();
+				break;
+			case 'KeyI':
+				this._InstantMode = !this._InstantMode;
+				this._C.Speed = this._InstantMode ? 0 : this._DefaultSpeed;
+				// TODO: Add message.
 				e.preventDefault();
 				break;
 			case 'KeyD':

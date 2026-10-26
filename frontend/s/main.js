@@ -27,11 +27,10 @@ function LoadComic(Name) {
 			throw new Error('Missing metadata which is required for this comic type.');
 		else if (!Meta)
 			console.warn('Unable to load comic metadata. Operating in streaming mode.');
-		globalThis.G = new GUI(La);
-		GUI.SetMessage(false);
-
 		La.SetPage(0);
 		La.Speed = .5;
+		globalThis.G = new GUI(La);
+		GUI.SetMessage(false);
 	}).catch((Err) => {
 		console.error('Failed to load comic:', Err);
 		GUI.SetMessage('Failed to load comic.');
