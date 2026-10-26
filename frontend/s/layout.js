@@ -90,9 +90,9 @@ export class Layout {
 	set HideNonFocusPages(Value) {
 		if (this._HideNonFocusPages == Value)
 			return;
-		this._Loaded.forEach((Slot, Key) => {
+		for (const [Key, Slot] of this._Loaded) {
 			Slot.Ele.style.opacity = (!Value || this.IsPageVisible(Key) ? 1 : 0);
-		});
+		};
 		this._HideNonFocusPages = Value;
 	}
 	get HideNonFocusPages() { return this._HideNonFocusPages; };
@@ -119,11 +119,11 @@ export class Layout {
 			while (VPs.length > 0)
 				VPs[0].remove();
 		} else {
-			this._Loaded.forEach((Slot, Key) => {
+			for (const [Key, Slot] of this._Loaded) {
 				const Viewpoints = this._Viewpoints[Key];
 				if (Viewpoints)
 					this._AddVPEles(Slot.Ele, Viewpoints);
-			});
+			};
 		}
 		this._AddVPs = Value;
 	}
@@ -494,14 +494,14 @@ export class Layout {
 	}
 	_UpdateLoadedEle(SetPage = true) {
 		// Update any elements already loaded.
-		this._Loaded.forEach((Slot, Key) => {
+		for (const [Key, Slot] of this._Loaded) {
 			if (!this._ElementOffsets[Key]) {
 				this.CullPage(Key);
 				return;
 			}
 			const EleSize = this._ElementSizes[Key];
 			this._SetPageSizePos(Slot.Ele, EleSize, Key);
-		});
+		};
 
 		// If we're on the focused page, update instantly.
 		if (SetPage) {
@@ -547,8 +547,8 @@ export class Layout {
 	set Speed(Var) {
 		this._Speed = HLCanvas.Speed = Var;
 		const SpeedString = (Var + 's');
-		this._Loaded.forEach((Slot, Key) => {
+		for (const Slot of this._Loaded.values()) {
 			Slot.Ele.style.transitionDuration = SpeedString;
-		});
+		};
 	}
 }
