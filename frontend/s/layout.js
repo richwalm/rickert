@@ -505,11 +505,16 @@ export class Layout {
 
 		// If we're on the focused page, update instantly.
 		if (SetPage) {
-			console.log('Instant snapping to', this._P);
-			const OldSpeed = HLCanvas.Speed;	// Don't change our own speed, so pages aren't adjusted.
-			HLCanvas.Speed = 0;
-			this.SetPage(this._P, this._VP, this._ExtraPages);
-			HLCanvas.Speed = OldSpeed;
+			if (!HLCanvas.Moving) {
+				console.log('Instant snapping to', this._P);
+				const OldSpeed = HLCanvas.Speed;	// Don't change our own speed, so pages aren't adjusted.
+				HLCanvas.Speed = 0;
+				this.SetPage(this._P, this._VP, this._ExtraPages);
+				HLCanvas.Speed = OldSpeed;
+			} else {
+				console.log('Already moving, so not instant snapping to', this._P);
+				this.SetPage(this._P, this._VP, this._ExtraPages);
+			}
 		}
 	}
 	// Main offset calculation. Called for elements without known offsets, or when a page has been resized.

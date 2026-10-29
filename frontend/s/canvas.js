@@ -19,6 +19,8 @@ const LLCanvas = new class {
 	get Height() { return this._C.offsetHeight; }
 	get Canvas() { return this._C; }
 
+	get Moving() { return this._Moving; }
+
 	_UpdateRegion(e) {
 		if (!this._ScrollBars)
 			return;
@@ -43,6 +45,9 @@ const LLCanvas = new class {
 		this._UR = this._UpdateRegion.bind(this);
 		addEventListener('resize', this._UR);
 		addEventListener('load', this._UR);
+		this._Moving = false;
+		this._C.addEventListener('transitionrun', ((e) => { this._Moving = true; }).bind(this));
+		this._C.addEventListener('transitionend', ((e) => { this._Moving = false; }).bind(this));
 	}
 
 	SetPos(NewX, NewY, NewZoom = this._Zoom) {
@@ -274,6 +279,7 @@ export const HLCanvas = new class {
 	set FillMode(Mode) { this._FillMode = Mode; }
 	get FillMode() { return this._FillMode; }
 	get Canvas() { return this._LL.Canvas; }
+	get Moving() { return this._LL.Moving; }
 	get Speed() { return this._LL.Speed; }
 	set Speed(Var) { this._LL.Speed = this._S.Speed = Var; }
 	get ShadeOpacity() { return this._S.Opacity; }
