@@ -5,8 +5,8 @@ const LLCanvas = new class {
 	get Speed() { return this._Speed; }
 	set Speed(Var) { this._Speed = Var; }
 
-	_SetCanvas(NewX, NewY, NewZoom) {
-		this._C.style.transitionDuration = (this._Speed + 's');
+	_SetCanvas(NewX, NewY, NewZoom, Instant = false) {
+		this._C.style.transitionDuration = (Instant ? 0 : this._Speed) + 's';
 		let TransformString = `translate(${-NewX * NewZoom}px, ${-NewY * NewZoom}px) scale(${NewZoom})`;
 		this._C.style.transform = TransformString;
 
@@ -60,7 +60,7 @@ const LLCanvas = new class {
 		let SL = -(this._SX - NewX) * this._Zoom;
 		let ST = -(this._SY - NewY) * this._Zoom;
 
-		// If scrollbars already in the right position, just return here.
+		// If scrollbars already in the right positions, not scrolling of them is needed so we'll just return here.
 		function Clamp(Number, Min, Max) {
 			return Math.min(Math.max(Number, Min), Max);
 		}
