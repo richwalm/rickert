@@ -82,6 +82,7 @@ const LLCanvas = new class {
 		} else {
 			this._FS.removeEventListener('scroll', this._UR);
 			this._FS.addEventListener('scrollend', (e) => {
+				this._UR();
 				this._FS.addEventListener('scroll', this._UR);
 			}, {'once': true});
 			this._FS.scroll({'left': SL, 'top': ST, 'behavior': 'smooth'});
