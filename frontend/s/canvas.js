@@ -146,10 +146,8 @@ const Shade = new class {
 // Higher-level canvas handler. Positions are rectangles and will adjust zooming by fitting or fill these.
 export const HLCanvas = new class {
 	_ResizeEvent() {
-		if (this._ResizeTimer) {
+		if (this._ResizeTimer)
 			clearTimeout(this._ResizeTimer);
-			this._ResizeTimer = null;
-		}
 		this._ResizeTimer = setTimeout(this._DoFocus.bind(this), 500);
 	}
 
