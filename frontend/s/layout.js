@@ -26,8 +26,8 @@ export class Layout {
 		this._DefaultImageSize = [1810, 2560];	// Used for the element size when no size data is loaded.
 
 		// Flags.
-		this._MoveByViewpoint = true;
-		this._HideNonFocusPages = false;
+		this._MoveByViewpoint = false;
+		this._HideNonFocusPages = true;
 		this._FillMode = false;
 
 		// Panels.
@@ -76,8 +76,10 @@ export class Layout {
 			this._CalcPageOffset(0);
 		}
 
-		if (Meta.Viewpoints)
+		if (Meta.Viewpoints) {
 			this._Viewpoints = Meta.Viewpoints;
+			this.MoveByViewpoint = true;
+		}
 
 		return Meta;
 	}
@@ -106,6 +108,7 @@ export class Layout {
 			VP = (this._Viewpoints[MinPage] ? 0 : null)
 		this.SetPage(MinPage, VP, 0);
 		this._MoveByViewpoint = Value;
+		HLCanvas.UseShade = Value;
 	}
 	get MoveByViewpoint() { return this._MoveByViewpoint; };
 
@@ -128,7 +131,7 @@ export class Layout {
 		this._AddVPs = Value;
 	}
 	get ShowVPs() { return this._AddVPs; };
-	get HasViewpoints() { return Boolean(this._Viewpoints); }
+	get HasViewpoints() { return Boolean(this._Viewpoints.length); }
 
 	set FillMode(Value) {
 		if (this._FillMode == Value)

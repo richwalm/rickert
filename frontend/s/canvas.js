@@ -138,8 +138,9 @@ const Shade = new class {
 	Hide() {
 		this._S.style.opacity = 0;
 	}
-	get DefaultOpacity() { return this._Opacity; }
-	set DefaultOpacity(Var) { this._Opacity = Var; }
+
+	get Opacity() { return this._Opacity; }
+	set Opacity(Var) { this._Opacity = Var; }
 }();
 
 // Higher-level canvas handler. Positions are rectangles and will adjust zooming by fitting or fill these.
@@ -174,6 +175,7 @@ export const HLCanvas = new class {
 
 		this._LL = LLC;
 		this._S = Shade;
+		this._UseShade = false;
 
 		this._Focusing = false;
 		this._FocusX = this._FocusY = 0;
@@ -266,9 +268,10 @@ export const HLCanvas = new class {
 			this._LL.EnableScrollbars(OffsetX, OffsetY, OffsetX + FocusWidth, OffsetY + FocusHeight, FX, FY, this._Ratio);
 
 		// Add shade. We'll offset this for the scrollbar if used.
-		this._S.SetSize(PixelWidth, PixelHeight,
-			(Scrollbars & 2) ? -(this._ScrollbarSize / 2) : null,
-			(Scrollbars & 1) ? -(this._ScrollbarSize / 2) : null);
+		if (this._UseShade)
+			this._S.SetSize(PixelWidth, PixelHeight,
+				(Scrollbars & 2) ? -(this._ScrollbarSize / 2) : null,
+				(Scrollbars & 1) ? -(this._ScrollbarSize / 2) : null);
 	}
 
 	SetRatioLimits(Min, Max) {
@@ -285,4 +288,6 @@ export const HLCanvas = new class {
 	set Speed(Var) { this._LL.Speed = this._S.Speed = Var; }
 	get ShadeOpacity() { return this._S.Opacity; }
 	set ShadeOpacity(Var) { this._S.Opacity = Var; }
+	get UseShade() { return this._UseShade; }
+	set UseShade(Var) { this._UseShade = Var; if (!Var) this._S.Hide(); else this._DoFocus(); }
 }(LLCanvas, Shade);
