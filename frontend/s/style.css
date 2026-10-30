@@ -95,6 +95,10 @@ td { background: #000; padding: 0; }
 .vp { box-shadow: red 0 0 100px inset; font-size: 5em; color: red; font-family: monospace; text-shadow: 0 0 10px white; user-select: none; }
 
 /* GUI */
+#nav.idle #left, #nav.idle #right {
+	opacity: 0;
+	cursor: none;
+}
 #left, #right {
 	position: fixed;
 	width: 25%;
@@ -104,6 +108,11 @@ td { background: #000; padding: 0; }
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	transition: opacity 500ms;
+	opacity: 0;
+}
+#left:hover, #right:hover {
+	opacity: 1;
 }
 #right {
 	right: 0;
@@ -114,8 +123,6 @@ td { background: #000; padding: 0; }
 	padding: 10px;
 	border-radius: 16px;
 	background: #0008 url(left.png) center no-repeat;
-	transition: opacity 500ms;
-	opacity: 0;
 }
 #rightbutton {
 	transform: scaleX(-1);

@@ -9,14 +9,31 @@ export class GUI {
 		if (this._C.HasViewpoints)
 			this.SwitchMode(true);
 		addEventListener('keydown', this._HandleKey.bind(this));
-		const LeftArea = document.getElementById('left');
-		const RightArea = document.getElementById('right');
-		LeftArea.addEventListener('click', this._MovePageKey.bind(this, 0));
-		RightArea.addEventListener('click', this._MovePageKey.bind(this, 1));
-		LeftArea.addEventListener('mouseenter', (e) => { LeftArea.firstChild.style.opacity = 1; });
-		LeftArea.addEventListener('mouseleave', (e) => { LeftArea.firstChild.style.opacity = 0; });
-		RightArea.addEventListener('mouseenter', (e) => { RightArea.firstChild.style.opacity = 1; });
-		RightArea.addEventListener('mouseleave', (e) => { RightArea.firstChild.style.opacity = 0; });
+
+		this._Nav = document.getElementById('nav');
+
+		this._IdleTimer = null;
+		this._MouseMove();
+		document.addEventListener('mousemove', this._MouseMove.bind(this));
+
+		document.getElementById('left').addEventListener('click', this._MovePageKey.bind(this, 0));
+		document.getElementById('right').addEventListener('click', this._MovePageKey.bind(this, 1));
+	}
+
+	_Idle(e) {
+		console.log('Idle reached.');
+		document.body.style.cursor = 'none';
+		this._Nav.classList.add('idle');
+		this._IdleTimer = null;
+	}
+	_MouseMove(e) {
+		if (!this._IdleTimer) {
+			// Back from an idle state.
+			this._Nav.classList.remove('idle');
+			document.body.style.cursor = 'auto';
+		} else
+			clearTimeout(this._IdleTimer);
+		this._IdleTimer = setTimeout(this._Idle.bind(this), 4000);
 	}
 
 	static SetMessage(Message) {
