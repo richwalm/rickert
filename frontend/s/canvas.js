@@ -7,7 +7,7 @@ const LLCanvas = new class {
 
 	_SetCanvas(NewX, NewY, NewZoom, Instant = false) {
 		this._C.style.transitionDuration = (Instant ? 0 : this._Speed) + 's';
-		let TransformString = `translate(${-NewX * NewZoom}px, ${-NewY * NewZoom}px) scale(${NewZoom})`;
+		let TransformString = `translate(${Math.round(-NewX * NewZoom)}px, ${Math.round(-NewY * NewZoom)}px) scale(${NewZoom})`;
 		this._C.style.transform = TransformString;
 
 		this._X = NewX;
@@ -217,9 +217,20 @@ export const HLCanvas = new class {
 			return PixelSize > CanvasSize;
 		}
 
+		function CapRatio(Value, Min, Max) {
+			if (Min && Value < Min)
+				return Min;
+			if (Max && Value > Max)
+				return Max;
+			return Value;
+		}
+
 		do {
-			const FocusWidthRatio = CanvasWidth / FocusWidth;
-			const FocusHeightRatio = CanvasHeight / FocusHeight;
+			let FocusWidthRatio = CanvasWidth / FocusWidth;
+			let FocusHeightRatio = CanvasHeight / FocusHeight;
+			// If provided, clip to max or min ratio.
+			FocusWidthRatio = CapRatio(FocusWidthRatio, this.MinRatio, this.MaxRatio);
+			FocusHeightRatio = CapRatio(FocusHeightRatio, this.MinRatio, this.MaxRatio);
 
 			this._Ratio = Math[this._FillMode ? 'max' : 'min'](FocusWidthRatio, FocusHeightRatio);
 
@@ -238,12 +249,6 @@ export const HLCanvas = new class {
 
 			break;
 		} while (true);
-
-		// If provided, clip to max or min ratio.
-		if (this.MinRatio && this._Ratio < this.MinRatio)
-			this._Ratio = this.MinRatio;
-		else if (this.MaxRatio && this._Ratio > this.MaxRatio)
-			this._Ratio = this.MaxRatio;
 
 		// If smaller, place in the center of the canvas.
 		function CalcCenterOffset(PixelSize, CanvasSize, Ratio) {

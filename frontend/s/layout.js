@@ -158,9 +158,11 @@ export class Layout {
 			let W = ImageSize[0], H = ImageSize[1];
 			if (this._FW) {
 				H *= (this._FW / W);
+				H = Math.round(H);
 				W = this._FW;
 			} else if (this._FH) {
 				W *= (this._FH / H);
+				W = Math.round(W);
 				H = this._FH;
 			}
 			return [W, H];
@@ -196,6 +198,25 @@ export class Layout {
 		X += Offset.X1 + this._X;
 		Y += Offset.Y1 + this._Y;
 		HLCanvas.SetFocus(X, Y, X + W, Y + H, FX, FY);
+	}
+
+	SetZoom(Zoom, PageNumber) {
+		if (!this._FW && !this._FH)
+			HLCanvas.SetRatioLimits(Zoom, Zoom);
+		else if (!Zoom || this._FW && this._FH)
+			HLCanvas.SetRatioLimits(null, null);
+		else {
+			const ES = this._ElementSizes[PageNumber];
+			const IS = this._Loader.GetImageSize(PageNumber);
+			if (!ES || !IS)
+				return;
+			const WidthOrHeight = this._FW ? 0 : 1;
+			const EleSize = ES[WidthOrHeight];
+			const ImgSize = IS[WidthOrHeight];
+			Zoom = (ImgSize / EleSize) * Zoom;
+			HLCanvas.SetRatioLimits(Zoom, Zoom);
+		}
+		this.SetPage(this._P, this._VP, this._ExtraPages);
 	}
 
 	CullPage(PageNumber) {
@@ -452,7 +473,7 @@ export class Layout {
 		return this.SetPage(NewPage, NewVP, 0);
 	}
 
-	// Calculate poisition of page elements.
+	// Calculate position of page elements.
 	_MakePageOffset(Page) {
 		const AvgImgSize = this._Loader.MedianImageSize || this._DefaultImageSize;
 		const AvgEleSize = this._CalcEleSize(AvgImgSize);
