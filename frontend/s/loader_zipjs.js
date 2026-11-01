@@ -107,7 +107,7 @@ export class ZIPJSLoader extends Loader {
 
 		const Ent = this._Entries[Number];
 		// zip-js has a MIME type obtainer, but might not be compiled in so we'll use our own.
-		const MIMEType = ImageExtensions[GetExtension(Ent.filename)];
+		const MIMEType = ImageExtensions[GetExtension(Ent.filename).toLowerCase()];
 		const BlobData = await Ent.getData(new BlobWriter(MIMEType));
 		if (!BlobData) {
 			console.error('Failed to obtain blob.');

@@ -3,6 +3,7 @@
 import { GetExtension } from './common.js';
 import { HTTPLoader } from './loader_http.js';
 import { ZIPJSLoader } from './loader_zipjs.js';
+import { UNRARITLoader } from './loader_unrarit.js';
 import { Layout } from './layout.js';
 import { GUI } from './gui.js';
 
@@ -11,14 +12,23 @@ let L, La, G;
 function LoadComic(Name) {
 	GUI.SetMessage('Loading comic...');
 
-	const Extension = GetExtension(Name);
-	if (Extension)
-		L = new ZIPJSLoader(Name);
-	else {
-		if (!Name.endsWith('/'))
-			Name += '/';
-		L = new HTTPLoader(Name);
+	const Extension = GetExtension(Name).toLowerCase();
+	switch (Extension) {
+		case 'zip':
+		case 'cbz':
+			L = new ZIPJSLoader(Name);
+			break;
+		case 'rar':
+		case 'cbr':
+			L = new UNRARITLoader(Name);
+			break;
+		case '':
+			if (!Name.endsWith('/'))
+				Name += '/';
+			L = new HTTPLoader(Name);
+			break;
 	}
+
 	globalThis.L = L;
 	globalThis.La = La = new Layout(L);
 
