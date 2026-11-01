@@ -32,7 +32,6 @@ body {
 	background: linear-gradient(#0008, #fff8, #0008);
 	animation: Loading 3s linear infinite;
 	background-size: 100% 200%;
-	color: white;
 }
 @keyframes Loading {
 	0% {background-position: 50% 200%}
@@ -41,7 +40,7 @@ body {
 /* Error */
 .error {
 	background: radial-gradient(#f998, #f338);
-	color: pink;
+	color: red;
 }
 /* Background note. */
 .bgnote {
@@ -66,6 +65,7 @@ body {
 	position: relative;
 }
 #msg > div {
+	color: #fff;
 	background: #000;
 	padding: .5em;
 	border: 2px solid #aaa;
@@ -77,8 +77,6 @@ body {
 }
 #msg > div input {
 	font-size: large;
-	color: #fff;
-	background: #000;
 	border-radius: .5em;
 	padding: .25em;
 }
