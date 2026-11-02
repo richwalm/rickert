@@ -36,6 +36,7 @@ const LLCanvas = new class {
 		// Scroll bar handling.
 		this._ScrollBars = false;
 		this._SX = this._SY = this._SMX = this._SMY = null;
+		this._GUI = null;
 
 		// Elements
 		this._FS = document.getElementById('fakescroll');
@@ -111,6 +112,17 @@ const LLCanvas = new class {
 		this._ScrollBars = false;
 		this._FS.style.display = 'none';
 		this._SX = this._SY = null;
+	}
+
+	GetScrollOffset() {
+		function CalcAxis(Client, Scroll, Amount) {
+			if (Client >= Scroll) // No scrollbars.
+				return null;
+			Scroll -= Client;
+			return Amount / Scroll;
+		}
+		return [CalcAxis(this._FS.clientWidth, this._FS.scrollWidth, this._FS.scrollLeft),
+			CalcAxis(this._FS.clientHeight, this._FS.scrollHeight, this._FS.scrollTop)]
 	}
 }();
 
@@ -270,6 +282,10 @@ export const HLCanvas = new class {
 		} else
 			this._LL.EnableScrollbars(OffsetX, OffsetY, OffsetX + FocusWidth, OffsetY + FocusHeight, FX, FY, this._Ratio);
 
+		// Advise to the GUI about the scrollbars.
+		if (this._ScrollbarSize && this._GUI)
+			this._GUI.AdjustScrollbars(Scrollbars & 1 ? this._ScrollbarSize : 0, Scrollbars & 2 ? this._ScrollbarSize : 0);
+
 		// Add shade. We'll offset this for the scrollbar if used.
 		if (this._UseShade)
 			this._S.SetSize(PixelWidth, PixelHeight,
@@ -293,4 +309,6 @@ export const HLCanvas = new class {
 	set ShadeOpacity(Var) { this._S.Opacity = Var; }
 	get UseShade() { return this._UseShade; }
 	set UseShade(Var) { this._UseShade = Var; if (!Var) this._S.Hide(); else this._DoFocus(); }
+
+	set GUI(Value) { this._GUI = Value; }
 }(LLCanvas, Shade);

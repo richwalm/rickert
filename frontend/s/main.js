@@ -6,6 +6,7 @@ import { ZIPJSLoader } from './loader_zipjs.js';
 import { UNRARITLoader } from './loader_unrarit.js';
 import { Layout } from './layout.js';
 import { GUI } from './gui.js';
+import { HLCanvas } from './canvas.js';
 
 let L, La, G;
 
@@ -41,6 +42,7 @@ function LoadComic(Name) {
 		La.Speed = .5;
 		globalThis.G = new GUI(La);
 		GUI.SetMessage(false);
+		HLCanvas.GUI = globalThis.G;
 	}).catch((Err) => {
 		console.error('Failed to load comic:', Err);
 		GUI.SetMessage('Failed to load comic.');

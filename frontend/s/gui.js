@@ -16,8 +16,10 @@ export class GUI {
 		this._MouseMove();
 		document.addEventListener('mousemove', this._MouseMove.bind(this));
 
-		document.getElementById('left').addEventListener('click', this._MovePageKey.bind(this, 0));
-		document.getElementById('right').addEventListener('click', this._MovePageKey.bind(this, 1));
+		this._Left = document.getElementById('left');
+		this._Left.addEventListener('click', this._MovePageKey.bind(this, 0));
+		this._Right = document.getElementById('right');
+		this._Right.addEventListener('click', this._MovePageKey.bind(this, 1));
 	}
 
 	_Idle(e) {
@@ -34,6 +36,11 @@ export class GUI {
 		} else
 			clearTimeout(this._IdleTimer);
 		this._IdleTimer = setTimeout(this._Idle.bind(this), 4000);
+	}
+
+	AdjustScrollbars(Ver, Hoz) {
+		this._Right.style.right = Hoz + 'px';
+		this._Left.style.bottom = this._Right.style.bottom = Ver + 'px';
 	}
 
 	static SetMessage(Message) {
