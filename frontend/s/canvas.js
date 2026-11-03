@@ -114,7 +114,7 @@ const LLCanvas = new class {
 		this._SX = this._SY = null;
 	}
 
-	GetScrollOffset() {
+	get ScrollOffset() {
 		function CalcAxis(Client, Scroll, Amount) {
 			if (Client >= Scroll) // No scrollbars.
 				return null;
@@ -309,6 +309,7 @@ export const HLCanvas = new class {
 	get FillMode() { return this._FillMode; }
 	get Canvas() { return this._LL.Canvas; }
 	get Moving() { return this._LL.Moving; }
+	get ScrollOffset() { return this._LL.ScrollOffset; }
 	get Speed() { return this._LL.Speed; }
 	set Speed(Var) { this._LL.Speed = this._S.Speed = Var; }
 	get ShadeOpacity() { return this._S.Opacity; }

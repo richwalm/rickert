@@ -19,7 +19,7 @@ export class GUI {
 		document.addEventListener('mousemove', this._MouseMove.bind(this));
 
 		this._Left = document.getElementById('left');
-		this._Left.addEventListener('click', this._MovePageKey.bind(this, 0));
+		this._Left.addEventListener('click', this._MovePageKey.bind(this, -1));
 		this._Left.addEventListener('wheel', this._OnWheel.bind(this));
 		this._Right = document.getElementById('right');
 		this._Right.addEventListener('click', this._MovePageKey.bind(this, 1));
@@ -62,9 +62,9 @@ export class GUI {
 	}
 
 	_MovePageKey(Dir) {
-		if (!this._C.Direction)	// Flip direction for LTR comics.
-			Dir = !Dir;
-		let Return = this._C.Move(Dir ? 1 : -1);
+		if (!this._C.StandardDirection)	// Flip direction for left to right or down to up comics.
+			Dir = -Dir;
+		let Return = this._C.Move(Dir);
 		if (!Return) {
 			// TODO: Pop up with a do you want to go to the next comic message. Otherwise, mention that they're going to wrong way.
 		}
@@ -86,15 +86,44 @@ export class GUI {
 		this._PanelMode = WantPanelMode;
 	}
 
+	_ArrowKeyPress(X, Y) {
+		const SO = HLCanvas.ScrollOffset;
+		function CanScroll(Dir, ScrollAreaPos) {
+			Dir = (Dir + 1) / 2; // Convert to 0..1, same as ScrollAreaPos.
+			return (Dir != ScrollAreaPos);
+		}
+		if (X) {
+			if (SO[0] !== null && CanScroll(X, SO[0])) {
+				HLCanvas.ScrollBy(X * 120, 0);
+			} else if (this._C.IsHoz)
+				return this._MovePageKey(X);
+		}
+		if (Y) {
+			if (SO[1] !== null && CanScroll(Y, SO[1])) {
+				HLCanvas.ScrollBy(0, Y * 120);
+			} else if (this._C.IsVer)
+				return this._MovePageKey(Y);
+		}
+		return true;
+	}
+
 	_HandleKey(e) {
 		switch (e.code) {
 			case 'ArrowLeft':
-				if (this._MovePageKey(0))
-					e.preventDefault();
+				this._ArrowKeyPress(-1, 0);
+				e.preventDefault();
 				break;
 			case 'ArrowRight':
-				if (this._MovePageKey(1))
-					e.preventDefault();
+				this._ArrowKeyPress(1, 0);
+				e.preventDefault();
+				break;
+			case 'ArrowUp':
+				this._ArrowKeyPress(0, -1);
+				e.preventDefault();
+				break;
+			case 'ArrowDown':
+				this._ArrowKeyPress(0, 1);
+				e.preventDefault();
 				break;
 			case 'KeyX':
 				this._C.ShowVPs = !this._C.ShowVPs;

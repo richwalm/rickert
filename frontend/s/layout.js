@@ -112,7 +112,9 @@ export class Layout {
 	}
 	get MoveByViewpoint() { return this._MoveByViewpoint; };
 
-	get Direction() { return this._PDX >= 0; };
+	get StandardDirection() { return (this._PDX > 0 || this._PDY > 0); };
+	get IsHoz() { return this._PDX; }
+	get IsVer() { return this._PDY; }
 
 	set ShowVPs(Value) {
 		if (this._AddVPs == Value)
