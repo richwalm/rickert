@@ -200,23 +200,15 @@ export class Layout {
 		HLCanvas.SetFocus(X, Y, X + W, Y + H, FX, FY);
 	}
 
-	SetZoom(Zoom, PageNumber) {
-		if (!this._FW && !this._FH)
-			HLCanvas.SetRatioLimits(Zoom, Zoom);
-		else if (!Zoom || this._FW && this._FH)
-			HLCanvas.SetRatioLimits(null, null);
-		else {
-			const ES = this._ElementSizes[PageNumber];
-			const IS = this._Loader.GetImageSize(PageNumber);
-			if (!ES || !IS)
-				return;
-			const WidthOrHeight = this._FW ? 0 : 1;
-			const EleSize = ES[WidthOrHeight];
-			const ImgSize = IS[WidthOrHeight];
-			Zoom = (ImgSize / EleSize) * Zoom;
-			HLCanvas.SetRatioLimits(Zoom, Zoom);
-		}
-		this.SetPage(this._P, this._VP, this._ExtraPages);
+	GetPageZoom(PageNumber = this._P) {
+		const ES = this._ElementSizes[PageNumber];
+		const IS = this._Loader.GetImageSize(PageNumber);
+		if (!ES || !IS)
+			return;
+		const WidthOrHeight = this._FW ? 0 : 1;
+		const EleSize = ES[WidthOrHeight];
+		const ImgSize = IS[WidthOrHeight];
+		return ImgSize / EleSize;
 	}
 
 	CullPage(PageNumber) {

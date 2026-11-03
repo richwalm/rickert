@@ -40,9 +40,8 @@ function LoadComic(Name) {
 			console.warn('Unable to load comic metadata. Operating in streaming mode.');
 		La.SetPage(0);
 		La.Speed = .5;
-		globalThis.G = new GUI(La);
+		globalThis.G = HLCanvas.GUI = new GUI(La);
 		GUI.SetMessage(false);
-		HLCanvas.GUI = globalThis.G;
 	}).catch((Err) => {
 		console.error('Failed to load comic:', Err);
 		GUI.SetMessage('Failed to load comic.');
@@ -52,6 +51,7 @@ function LoadComic(Name) {
 addEventListener('load', (event) => {
 	const USP = new URLSearchParams(window.location.search);
 	let Name = USP.get('name');
+	globalThis.HL = HLCanvas;
 	if (Name) {
 		LoadComic(Name);
 	} else

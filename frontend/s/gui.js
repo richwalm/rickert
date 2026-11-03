@@ -1,5 +1,7 @@
 'use strict';
 
+import { HLCanvas } from './canvas.js';
+
 export class GUI {
 	constructor(C) {
 		this._C = C;
@@ -18,8 +20,14 @@ export class GUI {
 
 		this._Left = document.getElementById('left');
 		this._Left.addEventListener('click', this._MovePageKey.bind(this, 0));
+		this._Left.addEventListener('wheel', this._OnWheel.bind(this));
 		this._Right = document.getElementById('right');
 		this._Right.addEventListener('click', this._MovePageKey.bind(this, 1));
+		this._Right.addEventListener('wheel', this._OnWheel.bind(this));
+	}
+
+	_OnWheel(e) {
+		HLCanvas.ScrollBy(e.deltaX, e.deltaY);
 	}
 
 	_Idle(e) {

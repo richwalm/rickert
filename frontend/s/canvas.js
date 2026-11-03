@@ -124,6 +124,10 @@ const LLCanvas = new class {
 		return [CalcAxis(this._FS.clientWidth, this._FS.scrollWidth, this._FS.scrollLeft),
 			CalcAxis(this._FS.clientHeight, this._FS.scrollHeight, this._FS.scrollTop)]
 	}
+	ScrollBy(X, Y) {
+		this._FS.scrollLeft += X;
+		this._FS.scrollTop += Y;
+	}
 }();
 
 // Shades part of the page we're not looking at.
@@ -299,6 +303,8 @@ export const HLCanvas = new class {
 		if (Max !== 0)
 			this.MaxRatio = Max;
 	}
+	ScrollBy(X, Y) { this._LL.ScrollBy(X, Y); }
+
 	set FillMode(Mode) { this._FillMode = Mode; }
 	get FillMode() { return this._FillMode; }
 	get Canvas() { return this._LL.Canvas; }
