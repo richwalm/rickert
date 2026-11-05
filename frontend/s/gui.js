@@ -138,7 +138,8 @@ export class GUI {
 				e.preventDefault();
 				break;
 			case 'Home':
-				this._C.SetPage(0);
+				// As the first page is usually the cover, keep this singular if on double page mode.
+				this._C.SetPage(-this._C.ExtraPages);
 				e.preventDefault();
 				break;
 			case 'End':

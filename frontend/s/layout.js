@@ -149,6 +149,9 @@ export class Layout {
 	set ExtraPages(Value) {
 		if (this._ExtraPages == Value)
 			return;
+		// Below added to ensure that we end up on a valid page.
+		if (this._P + Value <= 0)
+			this._P = 0;
 		this.SetPage(this._P, null, Value);
 		return;
 	}
@@ -437,7 +440,7 @@ export class Layout {
 			let PageNumber = this._GetNewPage(Amount);
 			// Incase we're moving in large amounts, cap to the highest and lowest options.
 			if (PageNumber + this._ExtraPages < 0)
-				PageNumber = 0;
+				PageNumber = -this._ExtraPages;
 			else if (PageNumber >= this.MaxImages)
 				PageNumber = this.MaxImages - 1;
 			return this.SetPage(PageNumber, null, this._ExtraPages);
