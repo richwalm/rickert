@@ -384,7 +384,7 @@ export class Layout {
 	}
 
 	// Set the page/viewpoint focus.
-	SetPage(PageNumber, ViewpointNumber = null, ExtraPages = 0) {
+	SetPage(PageNumber, ViewpointNumber = null, ExtraPages = this._ExtraPages) {
 		if (PageNumber >= this.MaxImages)
 			return false;
 		if (ViewpointNumber !== null) {
@@ -400,9 +400,9 @@ export class Layout {
 			this._ShowHidePage(this._P, this._ExtraPages, false);
 
 			this._ExtraPages = ExtraPages;
-			// With extra pages, turn off viewpoints.
+			// With extra pages, turn off viewpoints and shade.
 			if (this._ExtraPages)
-				this._MoveByViewpoint = false;
+				this._MoveByViewpoint = HLCanvas.UseShade = false;
 			this.LoadPage(PageNumber);
 			this._P = PageNumber;	// Set here so LoadPage knows what to cull.
 			for (let i = PageNumber + 1; i <= PageNumber + ExtraPages + this._SafeNeighhours; i++)
