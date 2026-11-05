@@ -15,14 +15,14 @@ export class GUI {
 		this._Nav = document.getElementById('nav');
 
 		this._IdleTimer = null;
-		this._MouseMove();
-		document.addEventListener('mousemove', this._MouseMove.bind(this));
+		this._MouseMoveEvent();
+		document.addEventListener('mousemove', this._MouseMoveEvent.bind(this));
 
 		this._Left = document.getElementById('left');
-		this._Left.addEventListener('click', this._MovePageKey.bind(this, -1));
+		this._Left.addEventListener('click', this._MovePageEvent.bind(this, -1));
 		this._Left.addEventListener('wheel', this._OnWheel.bind(this));
 		this._Right = document.getElementById('right');
-		this._Right.addEventListener('click', this._MovePageKey.bind(this, 1));
+		this._Right.addEventListener('click', this._MovePageEvent.bind(this, 1));
 		this._Right.addEventListener('wheel', this._OnWheel.bind(this));
 	}
 
@@ -36,7 +36,7 @@ export class GUI {
 		this._Nav.classList.add('idle');
 		this._IdleTimer = null;
 	}
-	_MouseMove(e) {
+	_MouseMoveEvent(e) {
 		if (!this._IdleTimer) {
 			// Back from an idle state.
 			this._Nav.classList.remove('idle');
@@ -61,10 +61,24 @@ export class GUI {
 		MsgEle.style.display = 'flex';
 	}
 
-	_MovePageKey(Dir) {
+	static GetAltKeys(e) {
+		// Holding alt keys is used for increasing amounts.
+		if (e.shiftKey && e.ctrlKey)
+			return 3;
+		else if (e.ctrlKey)
+			return 2;
+		else if (e.shiftKey)
+			return 1;
+		return 0;
+	}
+
+	_MovePageEvent(Dir, e) {
+		const PageAmounts = [1, 5, 10, 50];
+		const PageAmount = PageAmounts[this.constructor.GetAltKeys(e)];
+
 		if (!this._C.StandardDirection)	// Flip direction for left to right or down to up comics.
 			Dir = -Dir;
-		let Return = this._C.Move(Dir);
+		let Return = this._C.Move(Dir * PageAmount);
 		if (!Return) {
 			// TODO: Pop up with a do you want to go to the next comic message. Otherwise, mention that they're going to wrong way.
 		}
@@ -86,57 +100,41 @@ export class GUI {
 		this._PanelMode = WantPanelMode;
 	}
 
-	_ArrowKeyPress(X, Y, e) {
+	_ArrowKeyEvent(X, Y, e) {
 		// Increase rate if alt keys were held.
-		let Pages = 1;
-		let ScrollSpeed = 120;
-		if (e.shiftKey && e.ctrlKey) {
-			Pages = 50;
-			ScrollSpeed = 4800;
-		} else if (e.ctrlKey) {
-			Pages = 10;
-			ScrollSpeed = 480;
-		} else if (e.shiftKey) {
-			Pages = 5;
-			ScrollSpeed = 240;
-		}
-
 		const SO = HLCanvas.ScrollOffset;
 		function CanScroll(Dir, ScrollAreaPos) {
 			Dir = (Dir + 1) / 2; // Convert to 0..1, same as ScrollAreaPos.
 			return (Dir != ScrollAreaPos);
 		}
-		if (X) {
-			if (SO[0] !== null && CanScroll(X, SO[0])) {
-				HLCanvas.ScrollBy(X * ScrollSpeed, 0);
-			} else if (this._C.IsHoz)
-				return this._MovePageKey(X * Pages);
-		}
-		if (Y) {
-			if (SO[1] !== null && CanScroll(Y, SO[1])) {
-				HLCanvas.ScrollBy(0, Y * ScrollSpeed);
-			} else if (this._C.IsVer)
-				return this._MovePageKey(Y * Pages);
-		}
+
+		if (X && this._C.IsHoz && (SO[0] === null || !CanScroll(X, SO[0])))
+			return this._MovePageEvent(X, e);
+		if (Y && this._C.IsVer && (SO[1] === null || !CanScroll(Y, SO[1])))
+			return this._MovePageEvent(Y, e);
+
+		const ScrollSpeeds = [120, 240, 480, 4800];
+		const ScrollSpeed = ScrollSpeeds[this.constructor.GetAltKeys(e)];
+		HLCanvas.ScrollBy(X * ScrollSpeed, Y * ScrollSpeed);
 		return true;
 	}
 
 	_HandleKey(e) {
 		switch (e.code) {
 			case 'ArrowLeft':
-				this._ArrowKeyPress(-1, 0, e);
+				this._ArrowKeyEvent(-1, 0, e);
 				e.preventDefault();
 				break;
 			case 'ArrowRight':
-				this._ArrowKeyPress(1, 0, e);
+				this._ArrowKeyEvent(1, 0, e);
 				e.preventDefault();
 				break;
 			case 'ArrowUp':
-				this._ArrowKeyPress(0, -1, e);
+				this._ArrowKeyEvent(0, -1, e);
 				e.preventDefault();
 				break;
 			case 'ArrowDown':
-				this._ArrowKeyPress(0, 1, e);
+				this._ArrowKeyEvent(0, 1, e);
 				e.preventDefault();
 				break;
 			case 'Home':
