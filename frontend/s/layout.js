@@ -37,6 +37,8 @@ export class Layout {
 		this.Speed = 0;
 	}
 
+	get MaxImages() { return Number.isFinite(this._Loader.MaxImages) ? this._Loader.MaxImages : this._Loader.MaxValidImages + 20; }
+
 	static get MaxScreenDimension() {
 		// This has quite an effect on performance, especially on mobile devices.
 		// When too small, the browser may shrink images down when scrolling, causing noticeable blurring.
@@ -319,7 +321,7 @@ export class Layout {
 	LoadPage(PageNumber) {
 		if (this._Loaded.has(PageNumber)) // Already loaded.
 			return;
-		if (PageNumber < 0 || PageNumber >= this._Loader.MaxImages)
+		if (PageNumber < 0 || PageNumber >= this.MaxImages)
 			return;
 		this._CullLoadedPages();
 		let Slot = {};
@@ -383,7 +385,7 @@ export class Layout {
 
 	// Set the page/viewpoint focus.
 	SetPage(PageNumber, ViewpointNumber = null, ExtraPages = 0) {
-		if (PageNumber >= this._Loader.MaxImages)
+		if (PageNumber >= this.MaxImages)
 			return false;
 		if (ViewpointNumber !== null) {
 			const Viewpoints = this._Viewpoints[PageNumber];
@@ -412,45 +414,46 @@ export class Layout {
 
 		this._VP = ViewpointNumber;
 		const MinPage = Math.max(0, PageNumber);
-		const MaxPage = Math.min(this._Loader.MaxImages - 1, PageNumber + ExtraPages);
+		const MaxPage = Math.min(this.MaxImages - 1, PageNumber + ExtraPages);
 		const ValidExtraPages = MaxPage - MinPage;
 		this._SetFocus(MinPage, ViewpointNumber, ValidExtraPages);
 		return true;
 	}
 
-	_GetNewPage(Direction) {
-		let NewNumber = this._P + (this._ExtraPages + 1) * Direction;
+	_GetNewPage(Amount) {
+		let NewNumber = this._P + ((this._ExtraPages + 1) * Amount);
 		// In case the user has moved too far forward in streaming mode, jump back to the last valid image.
-		if (Direction < 0 && this._Loader.MaxValidImages)
+		if (Amount < 0 && this._Loader.MaxValidImages)
 			NewNumber = Math.min(NewNumber, this._Loader.MaxValidImages - 1);
 		return NewNumber;
 	}
 
 	// Move forward or back by pages or viewpoints.
-	Move(Direction) {
-		switch (Direction) {
-			case -1:
-			case 1:
-				break;
-			default:
-				return;
-		}
+	Move(Amount, ForcePage = false) {
+		if (!Amount)
+			return;
 
-		if (!this._MoveByViewpoint) {
-			let PageNumber = this._GetNewPage(Direction);
+		if (!this._MoveByViewpoint || ForcePage) {
+			let PageNumber = this._GetNewPage(Amount);
+			// Incase we're moving in large amounts, cap to the highest and lowest options.
+			if (PageNumber + this._ExtraPages < 0)
+				PageNumber = 0;
+			else if (PageNumber >= this.MaxImages)
+				PageNumber = this.MaxImages - 1;
 			return this.SetPage(PageNumber, null, this._ExtraPages);
 		}
 
 		// Move by viewpoint.
+		Amount = Math.sign(Amount);
 		const Viewpoints = this._Viewpoints[this._P];
 		if (Viewpoints) {
 			let NewVP = this._VP;
 			if (NewVP === null) {
-				NewVP = (Direction > 0 ? 0 : Viewpoints.length - 1);
+				NewVP = (Amount > 0 ? 0 : Viewpoints.length - 1);
 				console.warn('No viewpoint number when moving by viewpoint. Setting to', NewVP);
 			}
 			else
-				NewVP += Direction;
+				NewVP += Amount;
 			if (!(NewVP < 0 || NewVP >= Viewpoints.length))
 				return this.SetPage(this._P, NewVP, 0);
 		}
@@ -462,8 +465,8 @@ export class Layout {
 			return (Direction > 0 ? 0 : Viewpoints.length - 1);
 		}
 
-		let NewPage = this._GetNewPage(Direction);
-		let NewVP = GetFirstOrLastViewpoint(this._Viewpoints[NewPage], Direction);
+		let NewPage = this._GetNewPage(Amount);
+		let NewVP = GetFirstOrLastViewpoint(this._Viewpoints[NewPage], Amount);
 		return this.SetPage(NewPage, NewVP, 0);
 	}
 

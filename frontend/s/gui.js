@@ -86,7 +86,21 @@ export class GUI {
 		this._PanelMode = WantPanelMode;
 	}
 
-	_ArrowKeyPress(X, Y) {
+	_ArrowKeyPress(X, Y, e) {
+		// Increase rate if alt keys were held.
+		let Pages = 1;
+		let ScrollSpeed = 120;
+		if (e.shiftKey && e.ctrlKey) {
+			Pages = 50;
+			ScrollSpeed = 4800;
+		} else if (e.ctrlKey) {
+			Pages = 10;
+			ScrollSpeed = 480;
+		} else if (e.shiftKey) {
+			Pages = 5;
+			ScrollSpeed = 240;
+		}
+
 		const SO = HLCanvas.ScrollOffset;
 		function CanScroll(Dir, ScrollAreaPos) {
 			Dir = (Dir + 1) / 2; // Convert to 0..1, same as ScrollAreaPos.
@@ -94,15 +108,15 @@ export class GUI {
 		}
 		if (X) {
 			if (SO[0] !== null && CanScroll(X, SO[0])) {
-				HLCanvas.ScrollBy(X * 120, 0);
+				HLCanvas.ScrollBy(X * ScrollSpeed, 0);
 			} else if (this._C.IsHoz)
-				return this._MovePageKey(X);
+				return this._MovePageKey(X * Pages);
 		}
 		if (Y) {
 			if (SO[1] !== null && CanScroll(Y, SO[1])) {
-				HLCanvas.ScrollBy(0, Y * 120);
+				HLCanvas.ScrollBy(0, Y * ScrollSpeed);
 			} else if (this._C.IsVer)
-				return this._MovePageKey(Y);
+				return this._MovePageKey(Y * Pages);
 		}
 		return true;
 	}
@@ -110,19 +124,27 @@ export class GUI {
 	_HandleKey(e) {
 		switch (e.code) {
 			case 'ArrowLeft':
-				this._ArrowKeyPress(-1, 0);
+				this._ArrowKeyPress(-1, 0, e);
 				e.preventDefault();
 				break;
 			case 'ArrowRight':
-				this._ArrowKeyPress(1, 0);
+				this._ArrowKeyPress(1, 0, e);
 				e.preventDefault();
 				break;
 			case 'ArrowUp':
-				this._ArrowKeyPress(0, -1);
+				this._ArrowKeyPress(0, -1, e);
 				e.preventDefault();
 				break;
 			case 'ArrowDown':
-				this._ArrowKeyPress(0, 1);
+				this._ArrowKeyPress(0, 1, e);
+				e.preventDefault();
+				break;
+			case 'Home':
+				this._C.SetPage(0);
+				e.preventDefault();
+				break;
+			case 'End':
+				this._C.SetPage(this._C.MaxImages - 1);
 				e.preventDefault();
 				break;
 			case 'KeyX':
