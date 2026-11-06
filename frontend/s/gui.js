@@ -113,9 +113,10 @@ export class GUI {
 		if (Y && this._C.IsVer && (SO[1] === null || !CanScroll(Y, SO[1])))
 			return this._MovePageEvent(Y, e);
 
-		const ScrollSpeeds = [120, 240, 480, 4800];
-		const ScrollSpeed = ScrollSpeeds[this.constructor.GetAltKeys(e)];
-		HLCanvas.ScrollBy(X * ScrollSpeed, Y * ScrollSpeed);
+		const VS = HLCanvas.ViewableSize;
+		const Amounts = [0.5, 1, 2, 4];
+		const Amount = Amounts[this.constructor.GetAltKeys(e)];
+		HLCanvas.ScrollBy(X * VS[0] * Amount, Y * VS[1] * Amount);
 		return true;
 	}
 

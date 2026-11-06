@@ -124,6 +124,9 @@ const LLCanvas = new class {
 		return [CalcAxis(this._FS.clientWidth, this._FS.scrollWidth, this._FS.scrollLeft),
 			CalcAxis(this._FS.clientHeight, this._FS.scrollHeight, this._FS.scrollTop)]
 	}
+	get ViewableSize() {
+		return [this._FS.clientWidth, this._FS.clientHeight];
+	}
 	ScrollBy(X, Y) {
 		this._FS.scrollLeft += X;
 		this._FS.scrollTop += Y;
@@ -310,6 +313,7 @@ export const HLCanvas = new class {
 	get Canvas() { return this._LL.Canvas; }
 	get Moving() { return this._LL.Moving; }
 	get ScrollOffset() { return this._LL.ScrollOffset; }
+	get ViewableSize() { return this._LL.ViewableSize; }
 	get Speed() { return this._LL.Speed; }
 	set Speed(Var) { this._LL.Speed = this._S.Speed = Var; }
 	get ShadeOpacity() { return this._S.Opacity; }

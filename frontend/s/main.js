@@ -28,6 +28,9 @@ function LoadComic(Name) {
 				Name += '/';
 			L = new HTTPLoader(Name);
 			break;
+		default:
+			GUI.SetMessage(`Unknown comic extension type; ${Extension}`);
+			return;
 	}
 
 	globalThis.L = L;
