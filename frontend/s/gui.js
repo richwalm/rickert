@@ -116,7 +116,7 @@ export class GUI {
 		const VS = HLCanvas.ViewableSize;
 		const Amounts = [0.5, 1, 2, 4];
 		const Amount = Amounts[this.constructor.GetAltKeys(e)];
-		HLCanvas.ScrollBy(X * VS[0] * Amount, Y * VS[1] * Amount);
+		HLCanvas.ScrollBy(X * VS[0] * Amount, Y * VS[1] * Amount, false);
 		return true;
 	}
 

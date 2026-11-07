@@ -81,12 +81,12 @@ const LLCanvas = new class {
 		if (!this._Speed) {
 			this._FS.scroll(SL, ST);
 		} else {
+			// Disable scroll event so the canvas animation can't smoothly flow from one viewpoint to the next.
 			this._FS.removeEventListener('scroll', this._UR);
-			this._FS.addEventListener('scrollend', (e) => {
+			this._FS.scroll({'left': SL, 'top': ST, 'behavior': 'smooth'}).then((Status) => {
 				this._UR();
 				this._FS.addEventListener('scroll', this._UR);
-			}, {'once': true});
-			this._FS.scroll({'left': SL, 'top': ST, 'behavior': 'smooth'});
+			});
 		}
 	}
 
@@ -127,9 +127,13 @@ const LLCanvas = new class {
 	get ViewableSize() {
 		return [this._FS.clientWidth, this._FS.clientHeight];
 	}
-	ScrollBy(X, Y) {
-		this._FS.scrollLeft += X;
-		this._FS.scrollTop += Y;
+	ScrollBy(X, Y, Instant = true) {
+		X += this._FS.scrollLeft;
+		Y += this._FS.scrollTop;
+		if (Instant || !this._Speed)
+			this._FS.scroll(X, Y);
+		else
+			this._FS.scroll({'left': X, 'top': Y, 'behavior': 'smooth'});
 	}
 }();
 
@@ -306,7 +310,7 @@ export const HLCanvas = new class {
 		if (Max !== 0)
 			this.MaxRatio = Max;
 	}
-	ScrollBy(X, Y) { this._LL.ScrollBy(X, Y); }
+	ScrollBy(X, Y, Instant) { this._LL.ScrollBy(X, Y, Instant); }
 
 	set FillMode(Mode) { this._FillMode = Mode; }
 	get FillMode() { return this._FillMode; }
