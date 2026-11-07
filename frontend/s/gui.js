@@ -27,6 +27,8 @@ export class GUI {
 	}
 
 	_OnWheel(e) {
+		// I really wish that we could somehow pass this through to the element, making it feel the same as the native browser scrolling.
+		// Instead we have to make this scroll instant to make it feel better.
 		HLCanvas.ScrollBy(e.deltaX, e.deltaY);
 	}
 
@@ -105,7 +107,7 @@ export class GUI {
 		const SO = HLCanvas.ScrollOffset;
 		function CanScroll(Dir, ScrollAreaPos) {
 			Dir = (Dir + 1) / 2; // Convert to 0..1, same as ScrollAreaPos.
-			return (Dir != ScrollAreaPos);
+			return (Dir != Math.round(ScrollAreaPos));
 		}
 
 		if (X && this._C.IsHoz && (SO[0] === null || !CanScroll(X, SO[0])))

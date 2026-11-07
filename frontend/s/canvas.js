@@ -49,6 +49,11 @@ const LLCanvas = new class {
 		this._Moving = false;
 		this._C.addEventListener('transitionrun', ((e) => { this._Moving = true; }).bind(this));
 		this._C.addEventListener('transitionend', ((e) => { this._Moving = false; }).bind(this));
+
+		// These aren't currently supported on Firefox.
+		this._HasScrollPromises = (window.scroll(0, 0) instanceof Promise);
+		if (!this._HasScrollPromises)
+			console.log('Scroll promises aren\'t supported in this browser!');
 	}
 
 	SetPos(NewX, NewY, NewZoom = this._Zoom) {
@@ -78,7 +83,7 @@ const LLCanvas = new class {
 		}
 
 		this._SetCanvas(this._SX + (SL / this._Zoom), this._SY + (ST / this._Zoom), this._Zoom);
-		if (!this._Speed) {
+		if (!this._Speed || !this._HasScrollPromises) {
 			this._FS.scroll(SL, ST);
 		} else {
 			// Disable scroll event so the canvas animation can't smoothly flow from one viewpoint to the next.
